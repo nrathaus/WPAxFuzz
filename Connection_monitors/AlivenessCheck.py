@@ -14,6 +14,7 @@ class AllvCheck(threading.Thread):
         self.mode = mode
 
     def run(self):
+        """Run"""
         ip_prefix = self.find_LAN_prefix()
         targeted_sta_IP = self.find_IP_of_STA(ip_prefix)
         if self.mode == "fuzzing":
@@ -49,6 +50,7 @@ class AllvCheck(threading.Thread):
                     settings.is_alive = False
 
     def pingg(self, sta_Ip):
+        """pingg"""
         try:
             sa = subprocess.check_output(
                 [
@@ -65,6 +67,7 @@ class AllvCheck(threading.Thread):
             return "1"
 
     def find_LAN_prefix(self):
+        """find LAN prefix"""
         while True:
             print(
                 "\n\n"

@@ -54,17 +54,19 @@ if choice == 1:
     print('Type "standard" for the standard mode')
     print('Type "random" for the random mode\n\n')
     mode = input("Enter a choice: ").lower()
-    if mode == "standard" or mode == "random":
+    if mode in ["standard", "random"]:
         Aliveness = AllvCheck(targeted_STA, "fuzzing")
         Aliveness.start()
         while not settings.retrieving_IP:
             if settings.IP_not_alive:
                 sys.exit(0)
+
         sleep(10)
         subprocess.call(["clear"], shell=True)
     else:
-        print(bcolors.FAIL + "\nNo such mode :(" + bcolors.ENDC)
+        print(f"{bcolors.FAIL}\nNo such mode :({bcolors.ENDC}")
         sys.exit(0)
+
     subprocess.call(["clear"], shell=True)
     print(ascii_art.mngmt_frames)
     print("Which frames would you like to fuzz?")

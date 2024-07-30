@@ -204,6 +204,7 @@ class Generate_Frames:
         sendp(frame, count=burst_Number, iface=self.ATTACKING_INTERFACE, verbose=0)
 
     def change_to_diff_Frequency(self):
+        """Change to Diff Frequency"""
         temp_Mac = self.AP_MAC
         self.AP_MAC = self.AP_MAC_DIFFERENT
         self.AP_MAC_DIFFERENT = temp_Mac
@@ -800,7 +801,7 @@ class neccessary_Tests:
         )
         try:
             mode = subprocess.check_output(
-                ["iwconfig " + infos.ATTACKING_INTERFACE + " | grep Monitor "],
+                [f"iwconfig {infos.ATTACKING_INTERFACE} | grep Monitor "],
                 shell=True,
             )
         except subprocess.CalledProcessError:
@@ -918,65 +919,42 @@ terminal_width = int(subprocess.check_output(["stty", "size"]).split()[1])
 print("\n")
 print("-" * terminal_width)
 print(
-    (bcolors.OKGREEN + "INFORMATION RETRIEVED FROM CONFIG FILE" + bcolors.ENDC).center(
+    f"{bcolors.OKGREEN}INFORMATION RETRIEVED FROM CONFIG FILE{bcolors.ENDC}".center(
         terminal_width
     )
 )
-print(
-    ("  " + bcolors.STH + "AP_MAC:   " + AP_MAC_ADDRESS + bcolors.ENDC).center(
-        terminal_width
-    )
-)
-print(
-    ("  " + bcolors.STH + "AP_CHANNEL:   " + AP_CHANNEL + bcolors.ENDC).center(
-        terminal_width
-    )
-)
+print(f"  {bcolors.STH}AP_MAC:   {AP_MAC_ADDRESS}{bcolors.ENDC}".center(terminal_width))
+print(f"  {bcolors.STH}AP_CHANNEL:   {AP_CHANNEL}{bcolors.ENDC}".center(terminal_width))
 print("\n")
 print(
     (
-        bcolors.STH
-        + "AP_MAC_DIFFERENT_FREQUENCY:   "
-        + AP_MAC_DIFFERENT_FREQUENCY
-        + bcolors.ENDC
+        f"{bcolors.STH}AP_MAC_DIFFERENT_FREQUENCY:   "
+        f"{AP_MAC_DIFFERENT_FREQUENCY}{bcolors.ENDC}"
     ).center(terminal_width)
 )
 print(
     (
-        "  "
-        + bcolors.STH
-        + "CHANNEL_DIFFERENT_FREQUENCY:   "
-        + CHANNEL_DIFFERENT_FREQUENCY
-        + bcolors.ENDC
+        f"  {bcolors.STH}CHANNEL_DIFFERENT_FREQUENCY:   "
+        f"{CHANNEL_DIFFERENT_FREQUENCY}{bcolors.ENDC}"
     ).center(terminal_width)
 )
 print("\n")
 print(
     (
-        "  "
-        + bcolors.STH
-        + "TARGETED_STA_MAC_ADDRESS:   "
-        + TARGETED_STA_MAC_ADDRESS
-        + bcolors.ENDC
+        f"  {bcolors.STH}TARGETED_STA_MAC_ADDRESS:   "
+        f"{TARGETED_STA_MAC_ADDRESS}{bcolors.ENDC}"
     ).center(terminal_width)
 )
 print("\n")
 print(
     (
-        "  "
-        + bcolors.STH
-        + "ATTACKING INTERFACE:   "
-        + ATTACKING_INTERFACE
-        + bcolors.ENDC
+        f"  {bcolors.STH}ATTACKING INTERFACE:   " f"{ATTACKING_INTERFACE}{bcolors.ENDC}"
     ).center(terminal_width)
 )
 print(
     (
-        "  "
-        + bcolors.STH
-        + "MONITORING INTERFACE:   "
-        + MONITORING_INTERFACE
-        + bcolors.ENDC
+        f"  {bcolors.STH}MONITORING INTERFACE:   "
+        f"{MONITORING_INTERFACE}{bcolors.ENDC}"
     ).center(terminal_width)
 )
 print("\n")
