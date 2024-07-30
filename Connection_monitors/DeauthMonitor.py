@@ -1,9 +1,10 @@
+"""Deauth Monitor"""
 import threading
-from time import sleep
+
+import scapy.all
+import scapy.layers.dot11
 
 import settings
-from Msgs_colors import bcolors
-from scapy.all import *
 
 
 class DeauthMon(threading.Thread):
@@ -16,7 +17,7 @@ class DeauthMon(threading.Thread):
     def run(self):
         while settings.conn_loss or not settings.is_alive:
             pass
-        sniff(
+        scapy.all.sniff(
             iface=self.att_interface,
             store=0,
             stop_filter=self.stopfilter,
@@ -36,9 +37,15 @@ class DeauthMon(threading.Thread):
     def stopfilter(self, packet):
         keyword1 = "Deauthentification"
         keyword2 = "Disassociate"
-        if packet.haslayer(Dot11Deauth) or keyword1 in packet.summary():
+        if (
+            packet.haslayer(scapy.layers.dot11.Dot11Deauth)
+            or keyword1 in packet.summary()
+        ):
             settings.conn_loss = True
-        elif packet.haslayer(Dot11Disas) or keyword2 in packet.summary():
+        elif (
+            packet.haslayer(scapy.layers.dot11.Dot11Disas)
+            or keyword2 in packet.summary()
+        ):
             settings.conn_loss = True
         else:
             pass

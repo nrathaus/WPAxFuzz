@@ -119,7 +119,8 @@ class Frame:
         return scapy.layers.dot11.Dot11Elt(ID="SSID", info=ssid, len=len(ssid))
 
     def generate_supp_speed(self, mode):
-        # the standard speed rates is \x82\x84\x8b\x0c\x12\x96\x18\x24, the fields consists of 8 octets
+        # the standard speed rates is \x82\x84\x8b\x0c\x12\x96\x18\x24,
+        # the fields consists of 8 octets
         supported_rates = bytearray(b"")
         # standard supp rates are \x30\x48\60\x6c
         extended_supported_rates = bytearray(b"")
