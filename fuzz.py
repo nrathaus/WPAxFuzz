@@ -25,7 +25,13 @@ print(
     "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n\n"
 )
 print(
-    '\t\tThis tool is capable of fuzzing either any management, control or data frame of the 802.11\n\t\tprotocol or the SAE exchange. For the management, control or data frames, you can choose\n\t\teither the "standard" mode where all of the frames transmitted have valid size values or\n\t\tthe "random" mode where the size value is random. The SAE fuzzing operation requires an AP\n\t\tthat supports WPA3. Management, control or data frame fuzzing can be executed against any AP\n\t\t(WPA2 or WPA3). Finally, a DoS attack vector is implemented, which exploits the findings of\n\t\tthe management, control or data frames fuzzing.\n'
+    "\t\tThis tool is capable of fuzzing either any management, control or data frame of the 802.11\n"
+    "\t\tprotocol or the SAE exchange. For the management, control or data frames, you can choose\n"
+    '\t\teither the "standard" mode where all of the frames transmitted have valid size values or\n'
+    '\t\tthe "random" mode where the size value is random. The SAE fuzzing operation requires an AP\n'
+    "\t\tthat supports WPA3. Management, control or data frame fuzzing can be executed against any AP\n"
+    "\t\t(WPA2 or WPA3). Finally, a DoS attack vector is implemented, which exploits the findings of\n"
+    "\t\tthe management, control or data frames fuzzing.\n"
 )
 print(
     "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n\n"

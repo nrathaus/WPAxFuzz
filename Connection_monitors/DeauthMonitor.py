@@ -1,8 +1,9 @@
-import settings
 import threading
 from time import sleep
-from scapy.all import *
+
+import settings
 from Msgs_colors import bcolors
+from scapy.all import *
 
 
 class DeauthMon(threading.Thread):

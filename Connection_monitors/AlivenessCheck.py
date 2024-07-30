@@ -1,9 +1,10 @@
-import settings
+import subprocess
+import sys
 import threading
 from time import sleep
+
+import settings
 from Msgs_colors import bcolors
-import subprocess
-import os
 
 
 class AllvCheck(threading.Thread):
