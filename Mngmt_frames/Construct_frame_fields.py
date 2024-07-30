@@ -65,10 +65,10 @@ STANDARD_MAC_ADDRESS = "00:14:78:53:01:d8"
 
 class Frame:
     def construct_MAC_header(self, subtype, mac_to, mac_from, ap_mac):
-        Dot11 = scapy.layers.dot11.Dot11(
+        dot11 = scapy.layers.dot11.Dot11(
             type=0, subtype=subtype, addr1=mac_to, addr2=mac_from, addr3=ap_mac
         )
-        return scapy.layers.dot11.RadioTap() / Dot11
+        return scapy.layers.dot11.RadioTap() / dot11
 
     def construct_RSN(self, mode):
         # 03 and 14-15 are reserved for PKCS
