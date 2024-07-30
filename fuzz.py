@@ -5,6 +5,10 @@ from time import sleep
 
 import ascii_art
 import settings
+
+import scapy.all
+import scapy.layers.dot11
+
 from Connection_monitors.AlivenessCheck import AllvCheck
 from Connection_monitors.DeauthMonitor import DeauthMon
 from Ctrl_frames.ControlFrames import ControlFrames

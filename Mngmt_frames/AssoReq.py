@@ -1,7 +1,7 @@
-from scapy.all import Dot11AssoReq, Dot11Elt
-
-from Mngmt_frames.Construct_frame_fields import *
-
+"""Association Request"""
+import scapy.layers.dot11
+from random import randint
+from Mngmt_frames.Construct_frame_fields import Frame
 
 class AssoReq(Frame):
     def __init__(self, mode, frame_name, dest_addr, source_addr, interface, ssid):
@@ -11,7 +11,7 @@ class AssoReq(Frame):
         self.dest_addr = dest_addr
         self.source_addr = source_addr
         self.interface = interface
-        self.ssid = Dot11Elt(ID="SSID", info=ssid, len=len(ssid))
+        self.ssid = scapy.layers.dot11.Dot11Elt(ID="SSID", info=ssid, len=len(ssid))
         self.fuzzer_state = {
             "empty": {"send_function": self.send_empty_Asso_req, "conn_loss": False},
             "capabilities": {
@@ -58,7 +58,7 @@ class AssoReq(Frame):
         )
 
     def send_Asso_req_with_rand_RSN(self, mode):
-        asso_req = Dot11AssoReq(cap=4920)
+        asso_req = scapy.layers.dot11.Dot11AssoReq(cap=4920)
         frame = (
             self.construct_MAC_header(
                 0, self.dest_addr, self.source_addr, self.dest_addr
@@ -76,7 +76,7 @@ class AssoReq(Frame):
         return frame
 
     def send_Asso_req_with_rand_source_mac(self, mode):
-        asso_req = Dot11AssoReq(cap=4920)
+        asso_req = scapy.layers.dot11.Dot11AssoReq(cap=4920)
         frame = (
             self.construct_MAC_header(
                 0, self.dest_addr, self.generate_MAC(), self.dest_addr
@@ -94,7 +94,7 @@ class AssoReq(Frame):
         return frame
 
     def send_Asso_req_with_rand_capabilities(self, mode):
-        asso_req = Dot11AssoReq(cap=randint(1, 9999))
+        asso_req = scapy.layers.dot11.Dot11AssoReq(cap=randint(1, 9999))
         frame = (
             self.construct_MAC_header(
                 0, self.dest_addr, self.source_addr, self.dest_addr
@@ -112,7 +112,7 @@ class AssoReq(Frame):
         return frame
 
     def send_Asso_req_with_rand_supp_speed(self, mode):
-        asso_req = Dot11AssoReq(cap=4920)
+        asso_req = scapy.layers.dot11.Dot11AssoReq(cap=4920)
         frame = (
             self.construct_MAC_header(
                 0, self.dest_addr, self.source_addr, self.dest_addr
@@ -129,7 +129,7 @@ class AssoReq(Frame):
         return frame
 
     def send_Asso_req_with_rand_HT_capabilities(self, mode):
-        asso_req = Dot11AssoReq(cap=4920)
+        asso_req = scapy.layers.dot11.Dot11AssoReq(cap=4920)
         frame = (
             self.construct_MAC_header(
                 0, self.dest_addr, self.source_addr, self.dest_addr
@@ -147,7 +147,7 @@ class AssoReq(Frame):
         return frame
 
     def send_Asso_req_with_rand_ext_HT_capabilities(self, mode):
-        asso_req = Dot11AssoReq(cap=4920)
+        asso_req = scapy.layers.dot11.Dot11AssoReq(cap=4920)
         frame = (
             self.construct_MAC_header(
                 0, self.dest_addr, self.source_addr, self.dest_addr
@@ -165,7 +165,7 @@ class AssoReq(Frame):
         return frame
 
     def send_Asso_req_with_rand_power_caps(self, mode):
-        asso_req = Dot11AssoReq(cap=4920)
+        asso_req = scapy.layers.dot11.Dot11AssoReq(cap=4920)
         frame = (
             self.construct_MAC_header(
                 0, self.dest_addr, self.source_addr, self.dest_addr
@@ -183,7 +183,7 @@ class AssoReq(Frame):
         return frame
 
     def send_Asso_req_with_rand_supp_channels(self, mode):
-        asso_req = Dot11AssoReq(cap=4920)
+        asso_req = scapy.layers.dot11.Dot11AssoReq(cap=4920)
         frame = (
             self.construct_MAC_header(
                 0, self.dest_addr, self.source_addr, self.dest_addr
@@ -201,7 +201,7 @@ class AssoReq(Frame):
         return frame
 
     def send_Asso_req_with_all_fields_rand(self, mode):
-        asso_req = Dot11AssoReq(cap=randint(1, 9999))
+        asso_req = scapy.layers.dot11.Dot11AssoReq(cap=randint(1, 9999))
         frame = (
             self.construct_MAC_header(
                 0, self.dest_addr, self.source_addr, self.dest_addr

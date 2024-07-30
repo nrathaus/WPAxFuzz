@@ -2,7 +2,6 @@
 import subprocess
 from time import sleep
 
-import scapy.all
 import scapy.layers.dot11
 
 import settings
