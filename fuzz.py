@@ -1,4 +1,10 @@
+#!/usr/bin/python3
 import subprocess
+from time import sleep
+import sys
+import settings
+import ascii_art
+
 from Mngmt_frames.Beacon import Beacon
 from Mngmt_frames.AssoReq import AssoReq
 from Mngmt_frames.AssoResp import AssoResp
@@ -13,12 +19,6 @@ from Msgs_colors import bcolors
 from Ctrl_frames.ControlFrames import ControlFrames
 from Data_frames.DataFrames import DataFrames
 from fuzzer_init import *
-from time import sleep
-import threading
-import settings
-import sys
-import os
-import ascii_art
 
 
 print(ascii_art.logo)
@@ -35,13 +35,14 @@ print(
 print("1) Fuzz Management Frames")
 print("2) Fuzz SAE exchange")
 print("3) Fuzz Control Frames")
-print("4) Fuzz Data Frames " + bcolors.WARNING + "(BETA)" + bcolors.ENDC)
+print(f"4) Fuzz Data Frames {bcolors.WARNING}(BETA){bcolors.ENDC}")
 print("5) DoS attack module\n\n")
 try:
     choice = int(input("Enter a choice: "))
 except:
-    print("\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC)
-    os._exit(0)
+    print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
+    sys.exit(0)
+
 if choice == 1:
     subprocess.call(["clear"], shell=True)
     print(ascii_art.mngmt_frames)
@@ -53,12 +54,12 @@ if choice == 1:
         Aliveness.start()
         while not settings.retrieving_IP:
             if settings.IP_not_alive:
-                os._exit(0)
+                sys.exit(0)
         sleep(10)
         subprocess.call(["clear"], shell=True)
     else:
         print(bcolors.FAIL + "\nNo such mode :(" + bcolors.ENDC)
-        os._exit(0)
+        sys.exit(0)
     subprocess.call(["clear"], shell=True)
     print(ascii_art.mngmt_frames)
     print("Which frames would you like to fuzz?")
@@ -73,8 +74,9 @@ if choice == 1:
     try:
         choice2 = int(input("Select a frame to fuzz: "))
     except:
-        print("\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC)
-        os._exit(0)
+        print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
+        sys.exit(0)
+
     Deauth_monitor = DeauthMon(targeted_AP, targeted_STA, att_interface)
     Deauth_monitor.start()
     if choice2 == 1:
@@ -87,15 +89,14 @@ if choice == 1:
             try:
                 direction = int(input("Select a frame to fuzz: "))
             except:
-                print(
-                    "\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC
-                )
-                os._exit(0)
+                print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
+                sys.exit(0)
+
             if direction in {1, 2}:
                 pass
             else:
-                print(bcolors.FAIL + "\nNo such mode :(" + bcolors.ENDC)
-                os._exit(0)
+                print(f"{bcolors.FAIL}\nNo such mode :({bcolors.ENDC}")
+                sys.exit(0)
         else:
             direction = 1
         fuzz_beacons = Beacon(
@@ -138,15 +139,14 @@ if choice == 1:
             try:
                 direction = int(input("Select a frame to fuzz: "))
             except:
-                print(
-                    "\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC
-                )
-                os._exit(0)
+                print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
+                sys.exit(0)
+
             if direction in {1, 2}:
                 pass
             else:
-                print(bcolors.FAIL + "\nNo such mode :(" + bcolors.ENDC)
-                os._exit(0)
+                print(f"{bcolors.FAIL}\nNo such mode :({bcolors.ENDC}")
+                sys.exit(0)
         else:
             direction = 1
         fuzz_probe_resp = Proberesp(
@@ -189,15 +189,14 @@ if choice == 1:
             try:
                 direction = int(input("Select a frame to fuzz: "))
             except:
-                print(
-                    "\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC
-                )
-                os._exit(0)
+                print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
+                sys.exit(0)
+
             if direction in {1, 2}:
                 pass
             else:
-                print(bcolors.FAIL + "\nNo such mode :(" + bcolors.ENDC)
-                os._exit(0)
+                print(f"{bcolors.FAIL}\nNo such mode :({bcolors.ENDC}")
+                sys.exit(0)
         else:
             direction = 1
         fuzz_asso_resp = AssoResp(
@@ -239,15 +238,14 @@ if choice == 1:
             try:
                 direction = int(input("Select a frame to fuzz: "))
             except:
-                print(
-                    "\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC
-                )
-                os._exit(0)
+                print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
+                sys.exit(0)
+
             if direction in {1, 2}:
                 pass
             else:
                 print(bcolors.FAIL + "\nNo such mode :(" + bcolors.ENDC)
-                os._exit(0)
+                sys.exit(0)
         else:
             direction = 1
         fuzz_asso_resp = ReassoResp(
@@ -288,12 +286,12 @@ elif choice == 3:
         Aliveness.start()
         while not settings.retrieving_IP:
             if settings.IP_not_alive:
-                os._exit(0)
+                sys.exit(0)
         sleep(10)
         subprocess.call(["clear"], shell=True)
     else:
         print(bcolors.FAIL + "\nNo such mode :(" + bcolors.ENDC)
-        os._exit(0)
+        sys.exit(0)
     subprocess.call(["clear"], shell=True)
     print(ascii_art.control_frames)
     print("1) Target the STA and impersonate the AP")
@@ -301,13 +299,14 @@ elif choice == 3:
     try:
         direction = int(input("Select a frame to fuzz: "))
     except:
-        print("\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC)
-        os._exit(0)
+        print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
+        sys.exit(0)
+
     if direction in {1, 2}:
         pass
     else:
-        print(bcolors.FAIL + "\nNo such mode :(" + bcolors.ENDC)
-        os._exit(0)
+        print(f"{bcolors.FAIL}\nNo such mode :({bcolors.ENDC}")
+        sys.exit(0)
     subprocess.call(["clear"], shell=True)
     print(ascii_art.control_frames)
     print("Which frames would you like to fuzz?")
@@ -326,8 +325,9 @@ elif choice == 3:
     try:
         choice2 = int(input("Select a frame to fuzz: "))
     except:
-        print("\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC)
-        os._exit(0)
+        print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
+        sys.exit(0)
+
     if choice2 == 3:
         subprocess.call(["clear"], shell=True)
         print(ascii_art.control_frames)
@@ -344,8 +344,9 @@ elif choice == 3:
         try:
             choice3 = int(input("Select a frame to fuzz: "))
         except:
-            print("\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC)
-            os._exit(0)
+            print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
+            sys.exit(0)
+
         if direction == 1:
             fuzz_ctrl = ControlFrames(
                 targeted_STA, targeted_AP, att_interface, mode, choice2, choice3 + 1
@@ -380,12 +381,12 @@ elif choice == 4:
         Aliveness.start()
         while not settings.retrieving_IP:
             if settings.IP_not_alive:
-                os._exit(0)
+                sys.exit(0)
         sleep(10)
         subprocess.call(["clear"], shell=True)
     else:
         print(bcolors.FAIL + "\nNo such mode :(" + bcolors.ENDC)
-        os._exit(0)
+        sys.exit(0)
     subprocess.call(["clear"], shell=True)
     print(ascii_art.data_frames)
     print("1) Target the STA and impersonate the AP")
@@ -393,13 +394,15 @@ elif choice == 4:
     try:
         direction = int(input("Select a frame to fuzz: "))
     except:
-        print("\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC)
-        os._exit(0)
+        print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
+        sys.exit(0)
+
     if direction in {1, 2}:
         pass
     else:
-        print(bcolors.FAIL + "\nNo such mode :(" + bcolors.ENDC)
-        os._exit(0)
+        print(f"{bcolors.FAIL}\nNo such mode :({bcolors.ENDC}")
+        sys.exit(0)
+
     subprocess.call(["clear"], shell=True)
     print(ascii_art.data_frames)
     print("Which frames would you like to fuzz?")
@@ -422,8 +425,9 @@ elif choice == 4:
     try:
         choice2 = int(input("Select a frame to fuzz: "))
     except:
-        print("\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC)
-        os._exit(0)
+        print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
+        sys.exit(0)
+
     if direction == 1:
         fuzz_data = DataFrames(
             targeted_STA, targeted_AP, att_interface, mode, choice2, True
@@ -442,4 +446,4 @@ elif choice == 5:
     subprocess.call(["clear"], shell=True)
     subprocess.call(["sudo python3 mage.py"], shell=True)
 else:
-    print(bcolors.FAIL + "\nNo such choice :(" + bcolors.ENDC)
+    print(f"{bcolors.FAIL}\nNo such choice :({bcolors.ENDC}")

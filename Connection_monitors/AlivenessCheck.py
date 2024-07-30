@@ -162,4 +162,4 @@ class AllvCheck(threading.Thread):
                     )
                     settings.IP_not_alive = True
                     settings.retrieving_IP = True
-                    os._exit(0)
+                    sys.exit(0)

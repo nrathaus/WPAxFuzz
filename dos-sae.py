@@ -1,27 +1,26 @@
 #!/usr/bin/python
-from scapy.all import *
 
-import sys, select
+import sys
 import signal
 import os
-import string
-import random
 import threading
 import subprocess
 from datetime import datetime
-import hashlib
-from binascii import unhexlify
+import json
+import time
+
+from scapy.all import *
 
 sys.path.append("src/")
 import saee
 import graphs
-import json
-
 
 # conf.use_pcap = True
 
 
 class bcolors:
+    """Background colors"""
+
     HEADER = "\033[95m"
     OKBLUE = "\033[94m"
     OKCYAN = "\033[96m"
@@ -37,16 +36,12 @@ class bcolors:
 
 
 def signal_Handler(signum, frame):
+    """Signal Handler"""
     if signum == signal.SIGUSR2:
-        global toStop
         while toStop == 1:
             pass
         print(
-            "\n\n"
-            + bcolors.OKBLUE
-            + "STA is online"
-            + bcolors.ENDC
-            + "\n....Resuming execution...."
+            f"\n\n{bcolors.OKBLUE}STA is online{bcolors.ENDC}\n....Resuming execution...."
         )
         time.sleep(1)
     else:
@@ -62,6 +57,7 @@ deauth_to_Send_stop = 0
 
 class deauth_Monitor(threading.Thread):
     def run(self):
+        """Run"""
         print("Started deauth monitoring!")
         sniff(
             iface=infos.ATTACKING_INTERFACE,
@@ -79,57 +75,46 @@ class deauth_Monitor(threading.Thread):
         )
 
     def stopfilter(self, packet):
+        """Stop Filter"""
         global deauth_to_Send_stop
         global stop_ALL_threads
         keyword = "Deauthentification"
         if stop_ALL_threads == 1:
             return True
+
         if packet.haslayer(Dot11Deauth) or keyword in packet.summary():
             print(bcolors.FAIL + "\nFound Deauthentication frame" + bcolors.ENDC)
             time_Found = datetime.now().strftime("%H:%M:%S")
             subprocess.call(
                 [
-                    "echo "
-                    + str(time_Found)
-                    + ". Found deauth from "
-                    + str(packet[Dot11].addr2)
-                    + " to "
-                    + str(packet[Dot11].addr1)
-                    + " >> "
-                    + deauth_Path
-                    + " during: "
-                    + state.message
+                    f"echo {time_Found}. Found deauth from {packet[Dot11].addr2} "
+                    f"to {packet[Dot11].addr1} >> {deauth_Path} during: {state.message}"
                 ],
                 shell=True,
             )
             deauth_to_Send_stop = 1
 
             return False
-        elif packet.haslayer(Dot11Disas):
-            print(bcolors.FAIL + "\nFound Disassociation frame" + bcolors.ENDC)
+
+        if packet.haslayer(Dot11Disas):
+            print(f"{bcolors.FAIL}\nFound Disassociation frame{bcolors.ENDC}")
             time_Found = datetime.now().strftime("%H:%M:%S")
             subprocess.call(
                 [
-                    "echo "
-                    + str(time_Found)
-                    + ". Found disas from "
-                    + str(packet[Dot11].addr2)
-                    + " to "
-                    + str(packet[Dot11].addr1)
-                    + " >> "
-                    + deauth_Path
-                    + " during: "
-                    + state.message
+                    f"echo {time_Found}. Found disas from {packet[Dot11].addr2} to "
+                    f"{packet[Dot11].addr1} >> {deauth_Path} during: {state.message}"
                 ],
                 shell=True,
             )
             deauth_to_Send_stop = 1
             return False
-        else:
-            return False
+
+        return False
 
 
 class Generate_Frames:
+    """Generate Frames"""
+
     def __init__(
         self,
         AP_MAC,
@@ -151,6 +136,7 @@ class Generate_Frames:
         self.PASSWORD = PASSWORD
 
     def generate_Authbody(self, auth_Algorithm, sequence_Number, status1):
+        """Generate Authbody"""
         auth_Body = (
             RadioTap()
             / Dot11(
@@ -165,6 +151,7 @@ class Generate_Frames:
         return auth_Body
 
     def generate_valid_Commit_Authbody(self):
+        """Generate valid Commit Authbody"""
         auth_Body = self.generate_Authbody(3, 1, 0)
         return auth_Body
 
@@ -226,15 +213,11 @@ class Generate_Frames:
         self.CHANNEL_DIFFERENT = temp_Channel
 
         subprocess.call(
-            ["iwconfig " + self.ATTACKING_INTERFACE + " channel " + self.AP_CHANNEL],
+            [f"iwconfig {self.ATTACKING_INTERFACE} channel {self.AP_CHANNEL}"],
             shell=True,
         )
         current_Channel = subprocess.check_output(
-            [
-                "iw "
-                + self.ATTACKING_INTERFACE
-                + ' info | grep channel | cut -d " " -f2'
-            ],
+            [f'iw {self.ATTACKING_INTERFACE} info | grep channel | cut -d " " -f2'],
             shell=True,
         )
 
@@ -246,13 +229,14 @@ class Generate_Frames:
         )
 
     def toString(self):
-        print("AP_MAC: " + self.AP_MAC)
-        print("AP_CHANNEL: " + self.AP_CHANNEL)
-        print("AP_MAC_DIFFERENT: " + self.AP_MAC_DIFFERENT)
-        print("CHANNEL_DIFFERENT: " + self.CHANNEL_DIFFERENT)
-        print("STA_MAC: " + self.STA_MAC)
-        print("ATTACKING_INTERFACE: " + self.ATTACKING_INTERFACE)
-        print("MONITORING_INTERFACE: " + self.MONITORING_INTERFACE)
+        """To String"""
+        print(f"AP_MAC: {self.AP_MAC}")
+        print(f"AP_CHANNEL: {self.AP_CHANNEL}")
+        print(f"AP_MAC_DIFFERENT: {self.AP_MAC_DIFFERENT}")
+        print(f"CHANNEL_DIFFERENT: {self.CHANNEL_DIFFERENT}")
+        print(f"STA_MAC: {self.STA_MAC}")
+        print(f"ATTACKING_INTERFACE: {self.ATTACKING_INTERFACE}")
+        print(f"MONITORING_INTERFACE: {self.MONITORING_INTERFACE}")
 
 
 class save_State:
@@ -274,6 +258,7 @@ class save_State:
         status_values_to_Try,
         identifier,
     ):
+        """Set Values"""
         self.frames_to_Send = frames_to_Send
         self.auth_values_to_Try = auth_values_to_Try
         self.sequence_values_to_Try = sequence_values_to_Try
@@ -284,6 +269,7 @@ class save_State:
         return self.message == other.message
 
     def append_Order(self, listt):
+        """Append Order"""
         found = 0
         if not self.order_Values:
             self.order_Values.append(listt)
@@ -295,6 +281,7 @@ class save_State:
                 self.order_Values.append(listt)
 
     def append_Dc(self, listt):
+        """Append DC"""
         found = 0
         if not self.dc_values:
             self.dc_values.append(listt)
@@ -316,6 +303,7 @@ class fuzz:
         self.status_values_to_Try = [0, 1, 200]
 
     def construct_and_Send(self, identifier, burst_Number):
+        """Construct and Send"""
         global stopThread
         time.sleep(0.01)
 
@@ -339,6 +327,7 @@ class fuzz:
                     )
 
     def construct_and_Send2(self, identifier):
+        """Construct and Send2"""
         time.sleep(10)
         for a in state.order_Values:
             auth_valuee = a[0]
@@ -430,7 +419,7 @@ class fuzz:
         firs = 1
         self.total_frames_to_Send = 50
 
-        for times in range(0, self.total_frames_to_Send):
+        for _ in range(0, self.total_frames_to_Send):
             if identifier == 1:
                 if firs == 1:
                     frame = infos.generate_Authbody(
@@ -510,34 +499,29 @@ class fuzz:
                 )
                 toprint = 0
                 print("\n")
+
         time.sleep(4)
         stopThread = 1
         if MONITORING_INTERFACE == "00":
             if deauth_to_Send_stop == 1:
                 print(
-                    "\nFound deauthentication frames during the specific attack. Pausing 60 sec before continuing to the next case."
+                    "\nFound deauthentication frames during the specific attack. "
+                    "Pausing 60 sec before continuing to the next case."
                 )
                 time.sleep(60)
                 deauth_to_Send_stop = 0
         time.sleep(4)
 
     def logging(self, auth, seq, stat, message, burst_number):
-        string = (
-            "Sending "
-            + str(self.total_frames_to_Send)
-            + message
-            + str(auth)
-            + " "
-            + str(seq)
-            + " "
-            + str(stat)
-        )
+        """logging"""
+        string = f"Sending {self.total_frames_to_Send}{message}{auth} {seq} {stat}"
+
         if int(infos.AP_CHANNEL) > 15:
             string = string + " ...  5G"
         if burst_number > 1:
             string = string + "... BURSTY"
 
-        print("\n" + string)
+        print(f"\n{string}")
         state.message = string
 
 
@@ -552,7 +536,6 @@ class nonresponsiveness_Monitor(threading.Thread):
         stopThread = 1
         toStop = 0
         first = 0
-        counter = 0
         while True:
             if stop_ALL_threads == 1:
                 break
@@ -606,7 +589,6 @@ class nonresponsiveness_Monitor(threading.Thread):
                     ping_Response = self.pingg(sta_Ip)
 
                     fir = 1
-                    pi = 1
                     while ping_Response == "notfound" or ping_Response == "1":
                         print("Pinging STOPED responding")
                         if fir == 1:
@@ -642,14 +624,12 @@ class nonresponsiveness_Monitor(threading.Thread):
                 stopThread = 0
 
     def pingg(self, sta_Ip):
+        """pingg"""
         try:
             sa = subprocess.check_output(
                 [
-                    "ping -f -c 1 -W 1 "
-                    + sta_Ip
-                    + " -I "
-                    + MONITORING_INTERFACE
-                    + " > /dev/null && echo found || echo notfound"
+                    f"ping -f -c 1 -W 1 {sta_Ip} -I {MONITORING_INTERFACE}"
+                    " > /dev/null && echo found || echo notfound"
                 ],
                 shell=True,
             )
@@ -660,34 +640,29 @@ class nonresponsiveness_Monitor(threading.Thread):
             return "1"
 
     def find_my_Ip(self):
+        """Find my IP"""
         while True:
             print(
-                "\n\n"
-                + bcolors.OKGREEN
-                + "----Retrieving your ip address----"
-                + bcolors.ENDC
+                f"\n\n{bcolors.OKGREEN}----Retrieving your ip address----{bcolors.ENDC}"
             )
             ip_prefix = subprocess.check_output(
                 ['hostname -I | cut -d "." -f 1,2,3 '], shell=True
             )
             ip_prefix = ip_prefix[:-1]
+
             if len(ip_prefix) > 5:
                 print("Found ip prefix: " + ip_prefix + " ")
 
                 return ip_prefix
-            else:
-                print("Could not retrieve your ip address! Retrying in 3 seconds.")
-                time.sleep(3)
+
+            print("Could not retrieve your ip address! Retrying in 3 seconds.")
+            time.sleep(3)
 
     def find_sta_Ip(self, ip_prefix):
+        """Find STA IP"""
         temp = ip_prefix
         print(
-            "\n\n"
-            + bcolors.OKGREEN
-            + "----Pinging all hosts with an ip prefix of: "
-            + ip_prefix
-            + ".xx ----"
-            + bcolors.ENDC
+            f"\n\n{bcolors.OKGREEN}----Pinging all hosts with an ip prefix of: {ip_prefix}.xx ----{bcolors.ENDC}"
         )
         found = 0
         fe = 1
@@ -698,11 +673,8 @@ class nonresponsiveness_Monitor(threading.Thread):
                 try:
                     subprocess.call(
                         [
-                            "ping -f -c 1 -W 0.01 "
-                            + ip_prefix
-                            + " -I "
-                            + MONITORING_INTERFACE
-                            + " > /dev/null "
+                            f"ping -f -c 1 -W 0.01 {ip_prefix} -I {MONITORING_INTERFACE}"
+                            " > /dev/null "
                         ],
                         shell=True,
                     )
@@ -714,15 +686,14 @@ class nonresponsiveness_Monitor(threading.Thread):
             try:
                 sta_Ip = subprocess.check_output(
                     [
-                        "arp -a | grep "
-                        + infos.STA_MAC.lower()
-                        + ' | tr -d "()" | cut -d " " -f2'
+                        f"arp -a | grep {infos.STA_MAC.lower()}"
+                        ' | tr -d "()" | cut -d " " -f2'
                     ],
                     shell=True,
                 )
                 sta_Ip = sta_Ip[:-1]
 
-            except Exception as e:
+            except Exception:
                 print("arp -a exception.")
                 sta_Ip = "1"
 
@@ -748,30 +719,30 @@ class nonresponsiveness_Monitor(threading.Thread):
 
                 print("is responsive")
                 return sta_Ip
-            else:
-                print(
-                    "COULD NOT FIND IP OF MAC: "
-                    + TARGETED_STA_MAC_ADDRESS
-                    + "... Retrying in 1 second!!"
-                )
 
-                if state.message != "sth":
-                    if fe == 1:
-                        fe = 0
-                        print("Disconnected")
+            print(
+                "COULD NOT FIND IP OF MAC: "
+                + TARGETED_STA_MAC_ADDRESS
+                + "... Retrying in 1 second!!"
+            )
 
-                        new_List = list()
-                        new_List.append(state.auth_values_to_Try)
-                        new_List.append(state.sequence_values_to_Try)
-                        new_List.append(state.status_values_to_Try)
+            if state.message != "sth":
+                if fe == 1:
+                    fe = 0
+                    print("Disconnected")
 
-                        state.append_Dc(new_List)
+                    new_List = list()
+                    new_List.append(state.auth_values_to_Try)
+                    new_List.append(state.sequence_values_to_Try)
+                    new_List.append(state.status_values_to_Try)
 
-                        subprocess.call(
-                            ["echo DISCONNECTED >> " + nonresponsive_Path], shell=True
-                        )
+                    state.append_Dc(new_List)
 
-                time.sleep(0.5)
+                    subprocess.call(
+                        [f"echo DISCONNECTED >> {nonresponsive_Path}"], shell=True
+                    )
+
+            time.sleep(0.5)
 
 
 class neccessary_Tests:
@@ -786,7 +757,7 @@ class neccessary_Tests:
         time.sleep(0.1)
 
         frame = infos.generate_Custom_Confirm(3, 2, 0, 0)
-        print("Sending  CONFIRM")
+        print("Sending CONFIRM")
         sendp(frame, iface=infos.ATTACKING_INTERFACE, verbose=0)
 
     def check_sae_Exchange(self):
@@ -796,24 +767,21 @@ class neccessary_Tests:
             x = threading.Thread(target=self.thread_function)
             x.start()
 
-            print("Sending  COMMIT")
+            print("Sending COMMIT")
             answer = srp1(
                 frame, timeout=3, iface=infos.ATTACKING_INTERFACE, inter=0.1, verbose=0
             )
             if answer:
-                print("Exchange performed successfully  on " + str(i) + " try\n")
+                print(f"Exchange performed successfully on {i} try\n")
                 break
-            else:
-                print(
-                    bcolors.FAIL
-                    + "Didnt get answer. "
-                    + bcolors.ENDC
-                    + " Retrying for "
-                    + str(i)
-                    + " time. Max tries: 5\n"
-                )
+
+            print(
+                f"{bcolors.FAIL}Didnt get answer. {bcolors.ENDC} "
+                f"Retrying for {i} time. Max tries: 5\n"
+            )
 
     def check_monitor_mode(self):
+        """Check Monitor Mode"""
         mode = "s"
 
         print(
@@ -835,17 +803,18 @@ class neccessary_Tests:
                 ["iwconfig " + infos.ATTACKING_INTERFACE + " | grep Monitor "],
                 shell=True,
             )
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             mode = "1"
+
         if len(mode) > 5:
-            print(infos.ATTACKING_INTERFACE + " IS set to monitor mode. \n\n")
+            print(f"{infos.ATTACKING_INTERFACE} IS set to monitor mode. \n\n")
         else:
-            print(infos.ATTACKING_INTERFACE + " IS NOT set to monitor mode.")
+            print(f"{infos.ATTACKING_INTERFACE} IS NOT set to monitor mode.")
             print("TERMINATING...")
             sys.exit(0)
 
     def check_channel(self):
-        foundd = 0
+        """Check Channel"""
         print(
             bcolors.OKGREEN
             + "Validating if channel of: "
@@ -862,6 +831,7 @@ class neccessary_Tests:
             + " --"
             + bcolors.ENDC
         )
+        
         try:
             channel = subprocess.check_output(
                 [
@@ -871,9 +841,10 @@ class neccessary_Tests:
                 ],
                 shell=True,
             )
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             print("iw interface info | grep channel | cut -d " " -f2 returned error")
             channel = "0"
+
         channel = channel[:-1]
         while True:
             if channel == infos.AP_CHANNEL:
@@ -885,23 +856,24 @@ class neccessary_Tests:
                     + "\n\n"
                 )
                 break
-            else:
-                print(
-                    "Channel of "
-                    + infos.ATTACKING_INTERFACE
-                    + " IS NOT set to: "
-                    + infos.AP_CHANNEL
-                    + " OR  i cannot correctly retrieve the channel information\n"
-                )
-                print(
-                    "You are suggested to manually check and set the interface to the correct channel (if needed)"
-                )
-                print(
-                    "If you are sure that the channel is set correctly, INGORE this message.\n\n"
-                )
-                break
+
+            print(
+                "Channel of "
+                + infos.ATTACKING_INTERFACE
+                + " IS NOT set to: "
+                + infos.AP_CHANNEL
+                + " OR  i cannot correctly retrieve the channel information\n"
+            )
+            print(
+                "You are suggested to manually check and set the interface to the correct channel (if needed)"
+            )
+            print(
+                "If you are sure that the channel is set correctly, INGORE this message.\n\n"
+            )
+            break
 
     def search_AP(self):
+        """Search AP"""
         print(
             bcolors.OKGREEN
             + "Searching for AP in range, with mac address: "
@@ -916,6 +888,7 @@ class neccessary_Tests:
         sniff(iface=infos.ATTACKING_INTERFACE, stop_filter=self.stopfilter, store=0)
 
     def stopfilter(self, pkt):
+        """Stop Filter"""
         if pkt.haslayer(Dot11):
             dot11_layer = pkt.getlayer(Dot11)
 
@@ -929,7 +902,7 @@ class neccessary_Tests:
 
 os.system("cat src/logo.txt")
 
-config = json.load(open("src/config.json", "r"))
+config = json.load(open("src/config.json", "r", encoding="latin1"))
 
 AP_MAC_ADDRESS = config["AP_info"]["AP_MAC_ADDRESS"]
 AP_CHANNEL = config["AP_info"]["AP_CHANNEL"]
@@ -1026,15 +999,15 @@ infos = Generate_Frames(
 )
 
 folder_Name = datetime.now().strftime("fuzz%d-%m-%y__%H:%M:%S")
-folder_Path = "Logs/" + folder_Name
-deauth_Path = folder_Path + "/Deauth.txt"
-nonresponsive_Path = folder_Path + "/Nonresponsive.txt"
+folder_Path = f"Logs/{folder_Name}"
+deauth_Path = f"{folder_Path}/Deauth.txt"
+nonresponsive_Path = f"{folder_Path}/Nonresponsive.txt"
 
 subprocess.call(["mkdir -m 777 -p Logs"], shell=True)
-subprocess.call(["mkdir -m 777 " + folder_Path], shell=True)
-subprocess.call(["touch " + deauth_Path + " && chmod 777 " + deauth_Path], shell=True)
+subprocess.call([f"mkdir -m 777 {folder_Path}"], shell=True)
+subprocess.call([f"touch {deauth_Path} && chmod 777 {deauth_Path}"], shell=True)
 subprocess.call(
-    ["touch " + nonresponsive_Path + " && chmod 777 " + nonresponsive_Path], shell=True
+    [f"touch {nonresponsive_Path} && chmod 777 {nonresponsive_Path}"], shell=True
 )
 
 
@@ -1076,4 +1049,3 @@ while True:
         print("\n\nFUZZING FINISHED!")
 
         sys.exit(0)
-        break

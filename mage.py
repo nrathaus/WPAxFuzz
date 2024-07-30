@@ -39,7 +39,7 @@ def DoS_attack_init(file_list, mode, frames_dir):
                 chosen_files_list.append(file)
     else:
         print(bcolors.FAIL + "\nNo relevant files found :(" + bcolors.ENDC)
-        os._exit(0)
+        sys.exit(0)
     for files in chosen_files_list:
         with open(current_dir + frames_dir + files, "r") as f:
             for line in f:
@@ -237,7 +237,7 @@ def send_frames(frames_list, mode, frame_type):
             )
         except:
             print("\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC)
-            os._exit(0)
+            sys.exit(0)
         for frame in frames_list:
             print(f"Sending {num_of_frames} frames of the {counter + 1} seed..")
             for _ in range(0, num_of_frames):
@@ -262,7 +262,7 @@ def send_frames(frames_list, mode, frame_type):
             + bcolors.ENDC
         )
         print("Exiting attack!!")
-        os._exit(0)
+        sys.exit(0)
     elif mode == 2:
         print("\n- - - - - - - - - - - - - - - - - - - - - - - \n")
         print(bcolors.OKGREEN + "Launching the attack...." + bcolors.ENDC)
@@ -273,7 +273,7 @@ def send_frames(frames_list, mode, frame_type):
                 sendp(frame, count=128, iface=att_interface, verbose=0)
     else:
         print(bcolors.FAIL + "\nNo such choice :(" + bcolors.ENDC)
-        os._exit(0)
+        sys.exit(0)
 
 
 print(dos_attack)
@@ -297,7 +297,7 @@ try:
     choice = int(input("\nSelect the type of frames you wish to attack with: "))
 except:
     print("\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC)
-    os._exit(0)
+    sys.exit(0)
 subprocess.call(["clear"], shell=True)
 print(dos_attack)
 print(
@@ -310,7 +310,7 @@ try:
     choice1 = int(input("Select the type of the frames: "))
 except:
     print("\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC)
-    os._exit(0)
+    sys.exit(0)
 current_dir = os.getcwd()
 if choice1 == 1:
     file_list = os.listdir(current_dir + "/Logs/fuzz_mngmt_frames")
@@ -323,7 +323,7 @@ elif choice1 == 3:
     frames_dir = "/Logs/fuzz_data_frames/"
 else:
     print(bcolors.FAIL + "\nNo such choice :(" + bcolors.ENDC)
-    os._exit(0)
+    sys.exit(0)
 
 init_att = DoS_attack_init(file_list, choice, frames_dir)
 nec_checks()
