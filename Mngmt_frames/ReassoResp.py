@@ -1,5 +1,6 @@
+from scapy.all import Dot11Elt, Dot11ReassoResp
+
 from Mngmt_frames.Construct_frame_fields import *
-from scapy.all import Dot11ReassoResp, Dot11Elt
 
 
 class ReassoResp(Frame):

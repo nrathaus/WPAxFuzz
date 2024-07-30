@@ -1,6 +1,8 @@
-from Mngmt_frames.Construct_frame_fields import *
-from scapy.all import Dot11Beacon, Dot11Elt
 from random import randint
+
+from scapy.all import Dot11Beacon, Dot11Elt
+
+from Mngmt_frames.Construct_frame_fields import *
 
 
 class Beacon(Frame):

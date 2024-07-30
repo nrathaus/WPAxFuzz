@@ -9,7 +9,8 @@ import threading
 import time
 from datetime import datetime
 
-from scapy.all import *
+import scapy.layers.dot11
+import scapy.all
 
 sys.path.append("src/")
 import graphs
@@ -59,7 +60,7 @@ class deauth_Monitor(threading.Thread):
     def run(self):
         """Run"""
         print("Started deauth monitoring!")
-        sniff(
+        scapy.all.sniff(
             iface=infos.ATTACKING_INTERFACE,
             store=0,
             stop_filter=self.stopfilter,
@@ -82,13 +83,16 @@ class deauth_Monitor(threading.Thread):
         if stop_ALL_threads == 1:
             return True
 
-        if packet.haslayer(Dot11Deauth) or keyword in packet.summary():
+        if (
+            packet.haslayer(scapy.layers.dot11.Dot11Deauth)
+            or keyword in packet.summary()
+        ):
             print(bcolors.FAIL + "\nFound Deauthentication frame" + bcolors.ENDC)
             time_Found = datetime.now().strftime("%H:%M:%S")
             subprocess.call(
                 [
-                    f"echo {time_Found}. Found deauth from {packet[Dot11].addr2} "
-                    f"to {packet[Dot11].addr1} >> {deauth_Path} during: {state.message}"
+                    f"echo {time_Found}. Found deauth from {packet[scapy.layers.dot11.Dot11].addr2} "
+                    f"to {packet[scapy.layers.dot11.Dot11].addr1} >> {deauth_Path} during: {state.message}"
                 ],
                 shell=True,
             )
@@ -96,13 +100,13 @@ class deauth_Monitor(threading.Thread):
 
             return False
 
-        if packet.haslayer(Dot11Disas):
+        if packet.haslayer(scapy.layers.dot11.Dot11Disas):
             print(f"{bcolors.FAIL}\nFound Disassociation frame{bcolors.ENDC}")
             time_Found = datetime.now().strftime("%H:%M:%S")
             subprocess.call(
                 [
-                    f"echo {time_Found}. Found disas from {packet[Dot11].addr2} to "
-                    f"{packet[Dot11].addr1} >> {deauth_Path} during: {state.message}"
+                    f"echo {time_Found}. Found disas from {packet[scapy.layers.dot11.Dot11].addr2} to "
+                    f"{packet[scapy.layers.dot11.Dot11].addr1} >> {deauth_Path} during: {state.message}"
                 ],
                 shell=True,
             )
@@ -139,14 +143,16 @@ class Generate_Frames:
         """Generate Authbody"""
         auth_Body = (
             RadioTap()
-            / Dot11(
+            / scapy.layers.dot11.Dot11(
                 type=0,
                 subtype=11,
                 addr1=self.AP_MAC,
                 addr2=self.STA_MAC,
                 addr3=self.AP_MAC,
             )
-            / Dot11Auth(algo=auth_Algorithm, seqnum=sequence_Number, status=status1)
+            / scapy.layers.dot11.Dot11Auth(
+                algo=auth_Algorithm, seqnum=sequence_Number, status=status1
+            )
         )
         return auth_Body
 
@@ -201,7 +207,9 @@ class Generate_Frames:
         return frame
 
     def send_Frame(self, frame, burst_Number):
-        sendp(frame, count=burst_Number, iface=self.ATTACKING_INTERFACE, verbose=0)
+        scapy.all.sendp(
+            frame, count=burst_Number, iface=self.ATTACKING_INTERFACE, verbose=0
+        )
 
     def change_to_diff_Frequency(self):
         """Change to Diff Frequency"""
@@ -637,7 +645,7 @@ class nonresponsiveness_Monitor(threading.Thread):
             sa = sa[:-1]
             return sa
         except Exception as e:
-            logger.exception(str(e))
+            print(f"An exception has occured: {e}")
             return "1"
 
     def find_my_Ip(self):
@@ -759,7 +767,7 @@ class neccessary_Tests:
 
         frame = infos.generate_Custom_Confirm(3, 2, 0, 0)
         print("Sending CONFIRM")
-        sendp(frame, iface=infos.ATTACKING_INTERFACE, verbose=0)
+        scapy.all.sendp(frame, iface=infos.ATTACKING_INTERFACE, verbose=0)
 
     def check_sae_Exchange(self):
         print(bcolors.OKGREEN + "\n\nPerforming a SAE exchange: " + bcolors.ENDC)
@@ -769,7 +777,7 @@ class neccessary_Tests:
             x.start()
 
             print("Sending COMMIT")
-            answer = srp1(
+            answer = scapy.all.srp1(
                 frame, timeout=3, iface=infos.ATTACKING_INTERFACE, inter=0.1, verbose=0
             )
             if answer:
@@ -886,15 +894,17 @@ class neccessary_Tests:
             + bcolors.ENDC
         )
         print("Searching...")
-        sniff(iface=infos.ATTACKING_INTERFACE, stop_filter=self.stopfilter, store=0)
+        scapy.all.sniff(
+            iface=infos.ATTACKING_INTERFACE, stop_filter=self.stopfilter, store=0
+        )
 
     def stopfilter(self, pkt):
         """Stop Filter"""
-        if pkt.haslayer(Dot11):
-            dot11_layer = pkt.getlayer(Dot11)
+        if pkt.haslayer(scapy.layers.dot11.Dot11):
+            scapy.layers.dot11.Dot11_layer = pkt.getlayer(scapy.layers.dot11.Dot11)
 
-            if isinstance(dot11_layer.addr2, str):
-                if dot11_layer.addr2.lower() == infos.AP_MAC.lower():
+            if isinstance(scapy.layers.dot11.Dot11_layer.addr2, str):
+                if scapy.layers.dot11.Dot11_layer.addr2.lower() == infos.AP_MAC.lower():
                     print("\nAP found")
                     return True
 

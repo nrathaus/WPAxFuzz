@@ -1,5 +1,6 @@
-from Mngmt_frames.Construct_frame_fields import *
 from scapy.all import Dot11AssoResp, Dot11Elt
+
+from Mngmt_frames.Construct_frame_fields import *
 
 
 class AssoResp(Frame):

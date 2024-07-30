@@ -1,5 +1,6 @@
+from scapy.all import Dot11Elt, Dot11ProbeReq
+
 from Mngmt_frames.Construct_frame_fields import *
-from scapy.all import Dot11ProbeReq, Dot11Elt
 
 
 class ProbeReq(Frame):

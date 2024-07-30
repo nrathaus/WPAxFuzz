@@ -1,12 +1,15 @@
-from Msgs_colors import bcolors
-from scapy.all import Dot11, RadioTap, sendp, hexdump
+"""Data Frames"""
 import subprocess
-import os
-from time import sleep
-import settings
-from Logging import LogFiles
-from generateBytes import generate_bytes
 from threading import Thread
+from time import sleep
+
+import scapy.all
+import scapy.layers.dot11
+
+import settings
+from generateBytes import generate_bytes
+from Logging import LogFiles
+from Msgs_colors import bcolors
 
 NUM_OF_FRAMES_TO_SEND = 64
 
@@ -155,7 +158,7 @@ class DataFrames:
 
     def generate_MAC_header(self, FCf=11, seq_num=int.from_bytes(b"\x00\x00", "big")):
         if self.is_STA_the_target:
-            dot11 = Dot11(
+            dot11 = scapy.layers.dot11.Dot11(
                 type=2,
                 subtype=self.frame_id - 1,
                 FCfield=FCf,
@@ -166,7 +169,7 @@ class DataFrames:
                 addr4=self.source_addr,
             )
         else:
-            dot11 = Dot11(
+            dot11 = scapy.layers.dot11.Dot11(
                 type=2,
                 subtype=self.frame_id - 1,
                 FCfield=FCf,
@@ -176,7 +179,7 @@ class DataFrames:
                 SC=seq_num,
                 addr4=self.source_addr,
             )
-        MAC_header = RadioTap() / dot11
+        MAC_header = scapy.layers.dot11.RadioTap() / dot11
         return MAC_header
 
     def generate_random_payload(self):
@@ -225,13 +228,13 @@ class DataFrames:
         if not settings.is_alive:
             self.fuzzer_state[fuzzing_stage]["conn_loss"] = True
             print("\nHexDump of frame:")
-            hexdump(frame)
+            scapy.all.hexdump(frame)
             check_conn()
             return True
         elif settings.conn_loss:
             self.fuzzer_state[fuzzing_stage]["conn_loss"] = True
             print("\nHexDump of frame:")
-            hexdump(frame)
+            scapy.all.hexdump(frame)
             input(
                 f"\n{bcolors.FAIL}Deauth or Disass frame found.{bcolors.ENDC}\n\n{bcolors.WARNING}Reconnect, if needed, and press Enter to resume:{bcolors.ENDC}\n"
             )
@@ -319,7 +322,9 @@ class DataFrames:
                                 frames_till_disr = []
                                 break
                             else:
-                                sendp(frame, count=16, iface=self.interface, verbose=0)
+                                scapy.all.sendp(
+                                    frame, count=16, iface=self.interface, verbose=0
+                                )
                     else:
                         print(
                             f'Transmitting {bcolors.OKBLUE}{frame_info["frame_name"]}{bcolors.ENDC} frames with random {i}'
@@ -348,6 +353,8 @@ class DataFrames:
                                 frames_till_disr = []
                                 break
                             else:
-                                sendp(frame, count=16, iface=self.interface, verbose=0)
+                                scapy.all.sendp(
+                                    frame, count=16, iface=self.interface, verbose=0
+                                )
                 subprocess.call(["clear"], shell=True)
                 counter += 1

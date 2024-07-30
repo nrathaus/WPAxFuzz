@@ -1,18 +1,18 @@
-import string
+"""Construct Frame Fields"""
 import subprocess
-from random import choice
-from random import randint
-from scapy.all import Dot11, Dot11Elt, RadioTap, sendp, hexdump
 from time import sleep
+
+import scapy.all
+import scapy.layers.dot11
+
 import settings
-import os
+from generateBytes import generate_bytes
 from Logging import LogFiles
-from generateBytes import *
 from Msgs_colors import bcolors
 
 NUM_OF_FRAMES_TO_SEND = 64
 
-STANDARD_RSN = Dot11Elt(
+STANDARD_RSN = scapy.layers.dot11.Dot11Elt(
     ID="RSNinfo",
     info=(
         "\x01\x00"  # RSN Version 1
@@ -26,45 +26,49 @@ STANDARD_RSN = Dot11Elt(
     ),
 )  # RSN Capabilities (no extra capabilities)
 
-STANDARD_TIM = Dot11Elt(ID="TIM", info="\x05\x04\x00\x01\x00\x00")
+STANDARD_TIM = scapy.layers.dot11.Dot11Elt(ID="TIM", info="\x05\x04\x00\x01\x00\x00")
 
-SUPPORTED_RATES = Dot11Elt(ID="Rates", info="\x82\x84\x8b\x0c\x12\x96\x18\x24")
-SUPPL_RATES = Dot11Elt(ID="ESRates", info="\x30\x48\60\x6c")
+SUPPORTED_RATES = scapy.layers.dot11.Dot11Elt(
+    ID="Rates", info="\x82\x84\x8b\x0c\x12\x96\x18\x24"
+)
+SUPPL_RATES = scapy.layers.dot11.Dot11Elt(ID="ESRates", info="\x30\x48\60\x6c")
 
-STANDARD_HT_CAPABILITIES = Dot11Elt(
+STANDARD_HT_CAPABILITIES = scapy.layers.dot11.Dot11Elt(
     ID=45,
     info="\x67\x09\x17\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
     "\x00\x00\x00\x00\x00\x00\x00\x00",
 )
-STANDARD_DS = Dot11Elt(ID="DSset", info="\x0b")
+STANDARD_DS = scapy.layers.dot11.Dot11Elt(ID="DSset", info="\x0b")
 
-STANDARD_EXT_HT_CAPABILITIES = Dot11Elt(ID=127, info="\x00\x00\x08\x00\x00\x00\x00\x40")
+STANDARD_EXT_HT_CAPABILITIES = scapy.layers.dot11.Dot11Elt(
+    ID=127, info="\x00\x00\x08\x00\x00\x00\x00\x40"
+)
 
-STANDARD_POWER_CAPS = Dot11Elt(ID=33, info="\x09\x15")
+STANDARD_POWER_CAPS = scapy.layers.dot11.Dot11Elt(ID=33, info="\x09\x15")
 
-STANDARD_SUPP_CHANNELS = Dot11Elt(ID=36, info="\x01\x0d")
+STANDARD_SUPP_CHANNELS = scapy.layers.dot11.Dot11Elt(ID=36, info="\x01\x0d")
 
-STANDARD_OVERLAPPING_BSS = Dot11Elt(
+STANDARD_OVERLAPPING_BSS = scapy.layers.dot11.Dot11Elt(
     ID=74, info="\x14\x00\x0a\x00\x2c\x01\xc8\x00\x14\x00\x05\x00\x19"
 )
 
-STANDARD_HT_INFORMATION = Dot11Elt(
+STANDARD_HT_INFORMATION = scapy.layers.dot11.Dot11Elt(
     ID=61,
     info="\x0b\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
     "\x00\x00\x00\x00\x00",
 )
 
-STANDARD_RM_CAPS = Dot11Elt(ID=70, info="\x31\x08\x01\x00\x00")
+STANDARD_RM_CAPS = scapy.layers.dot11.Dot11Elt(ID=70, info="\x31\x08\x01\x00\x00")
 
 STANDARD_MAC_ADDRESS = "00:14:78:53:01:d8"
 
 
 class Frame:
     def construct_MAC_header(self, subtype, mac_to, mac_from, ap_mac):
-        dot11 = Dot11(
+        Dot11 = scapy.layers.dot11.Dot11(
             type=0, subtype=subtype, addr1=mac_to, addr2=mac_from, addr3=ap_mac
         )
-        return RadioTap() / dot11
+        return scapy.layers.dot11.RadioTap() / Dot11
 
     def construct_RSN(self, mode):
         # 03 and 14-15 are reserved for PKCS
@@ -87,13 +91,15 @@ class Frame:
         for item in generate_bytes(2, mode):
             rsn_array[6].append(item)
         rsn_bytes = b"".join(rsn_array)
-        return Dot11Elt(ID="RSNinfo", info=rsn_bytes, len=len(rsn_bytes))
+        return scapy.layers.dot11.Dot11Elt(
+            ID="RSNinfo", info=rsn_bytes, len=len(rsn_bytes)
+        )
 
     def construct_TIM(self, mode):
         tim_bytes = bytearray(b"")
         for item in generate_bytes(6, mode):
             tim_bytes.append(item)
-        return Dot11Elt(ID="TIM", info=tim_bytes)
+        return scapy.layers.dot11.Dot11Elt(ID="TIM", info=tim_bytes)
 
     def generate_MAC(self):
         mac_bytes = generate_bytes(6, "standard")
@@ -110,7 +116,7 @@ class Frame:
         ssid = bytearray(b"")
         for item in generate_bytes(16, mode):
             ssid.append(item)
-        return Dot11Elt(ID="SSID", info=ssid, len=len(ssid))
+        return scapy.layers.dot11.Dot11Elt(ID="SSID", info=ssid, len=len(ssid))
 
     def generate_supp_speed(self, mode):
         # the standard speed rates is \x82\x84\x8b\x0c\x12\x96\x18\x24, the fields consists of 8 octets
@@ -121,9 +127,9 @@ class Frame:
             supported_rates.append(item)
         for item in generate_bytes(4, mode):
             extended_supported_rates.append(item)
-        rates = Dot11Elt(
+        rates = scapy.layers.dot11.Dot11Elt(
             ID="Rates", info=supported_rates, len=len(supported_rates)
-        ) / Dot11Elt(
+        ) / scapy.layers.dot11.Dot11Elt(
             ID="ESRates",
             info=extended_supported_rates,
             len=len(extended_supported_rates),
@@ -143,52 +149,52 @@ class Frame:
         channel = bytearray(b"")
         for item in generate_bytes(1, mode):
             channel.append(item)
-        return Dot11Elt(ID="DSset", info=channel, len=len(channel))
+        return scapy.layers.dot11.Dot11Elt(ID="DSset", info=channel, len=len(channel))
 
     def generate_HT_capabilities(self, mode):
         ht_cap = bytearray(b"")
         for item in generate_bytes(26, mode):
             ht_cap.append(item)
-        return Dot11Elt(ID=45, info=ht_cap, len=len(ht_cap))
+        return scapy.layers.dot11.Dot11Elt(ID=45, info=ht_cap, len=len(ht_cap))
 
     def generate_extended_HT_capabilities(self, mode):
         ext_ht_cap = bytearray(b"")
         for item in generate_bytes(8, mode):
             ext_ht_cap.append(item)
-        return Dot11Elt(ID=127, info=ext_ht_cap, len=len(ext_ht_cap))
+        return scapy.layers.dot11.Dot11Elt(ID=127, info=ext_ht_cap, len=len(ext_ht_cap))
 
     def generate_power_capability(self, mode):
         power_cap = bytearray(b"")
         for item in generate_bytes(2, mode):
             power_cap.append(item)
-        return Dot11Elt(ID=33, info=power_cap, len=len(power_cap))
+        return scapy.layers.dot11.Dot11Elt(ID=33, info=power_cap, len=len(power_cap))
 
     def generate_supported_channels(self, mode):
         supp_ch = bytearray(b"")
         for item in generate_bytes(2, mode):
             supp_ch.append(item)
-        return Dot11Elt(ID=36, info=supp_ch, len=len(supp_ch))
+        return scapy.layers.dot11.Dot11Elt(ID=36, info=supp_ch, len=len(supp_ch))
 
     def generate_overlapping_BSS(self, mode):
         overl_bss = bytearray(b"")
         for item in generate_bytes(14, mode):
             overl_bss.append(item)
-        return Dot11Elt(ID=74, info=overl_bss, len=len(overl_bss))
+        return scapy.layers.dot11.Dot11Elt(ID=74, info=overl_bss, len=len(overl_bss))
 
     def generate_HT_information(self, mode):
         ht_info = bytearray(b"")
         for item in generate_bytes(22, mode):
             ht_info.append(item)
-        return Dot11Elt(ID=61, info=ht_info, len=len(ht_info))
+        return scapy.layers.dot11.Dot11Elt(ID=61, info=ht_info, len=len(ht_info))
 
     def generate_RM_enabled_capabilities(self, mode):
         rm_caps = bytearray(b"")
         for item in generate_bytes(5, mode):
             rm_caps.append(item)
-        return Dot11Elt(ID=70, info=rm_caps, len=len(rm_caps))
+        return scapy.layers.dot11.Dot11Elt(ID=70, info=rm_caps, len=len(rm_caps))
 
     def send_Frame(self, frame, interface):
-        sendp(frame, count=2, iface=interface, verbose=0)
+        scapy.all.sendp(frame, count=2, iface=interface, verbose=0)
 
     def check_conn_aliveness(self, frame, fuzzing_stage=0):
         def check_conn():
@@ -203,7 +209,7 @@ class Frame:
             else:
                 self.fuzzer_state[fuzzing_stage]["conn_loss"] = True
             print("\nHexDump of frame:")
-            hexdump(frame)
+            scapy.all.hexdump(frame)
             check_conn()
             return True
         elif settings.conn_loss:
@@ -212,7 +218,7 @@ class Frame:
             else:
                 self.fuzzer_state[fuzzing_stage]["conn_loss"] = True
             print("\nHexDump of frame:")
-            hexdump(frame)
+            scapy.all.hexdump(frame)
             input(
                 f"\n{bcolors.FAIL}Deauth or Disass frame found.{bcolors.ENDC}\n\n{bcolors.WARNING}Reconnect, if needed, and press Enter to resume:{bcolors.ENDC}\n"
             )

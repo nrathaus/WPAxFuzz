@@ -1,3 +1,4 @@
+"""Aliveness Check"""
 import subprocess
 import sys
 import threading
@@ -63,7 +64,7 @@ class AllvCheck(threading.Thread):
             sa = sa[:-1]
             return sa.decode("utf-8")
         except Exception as e:
-            logger.exception(str(e))
+            print(f"An exception has occured: {e}")
             return "1"
 
     def find_LAN_prefix(self):
@@ -108,6 +109,7 @@ class AllvCheck(threading.Thread):
                     )
                 except:
                     print("Catched. Most likely your WNIC has stopped working!")
+
                 ip_prefix = temp
                 try:
                     sta_Ip = subprocess.check_output(
@@ -122,6 +124,7 @@ class AllvCheck(threading.Thread):
                 except Exception as e:
                     print("arp -a exception.")
                     sta_Ip = "1"
+
                 if len(sta_Ip) > 5:
                     print(
                         "\nRetrieved IP of MAC: "

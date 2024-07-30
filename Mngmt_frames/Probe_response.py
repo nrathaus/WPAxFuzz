@@ -1,6 +1,8 @@
-from Mngmt_frames.Construct_frame_fields import *
-from scapy.all import Dot11ProbeResp, Dot11Elt
 from random import randint
+
+from scapy.all import Dot11Elt, Dot11ProbeResp
+
+from Mngmt_frames.Construct_frame_fields import *
 
 
 class Proberesp(Frame):
