@@ -1,19 +1,19 @@
 #!/usr/bin/python
 
-import sys
-import signal
-import os
-import threading
-import subprocess
-from datetime import datetime
 import json
+import os
+import signal
+import subprocess
+import sys
+import threading
 import time
+from datetime import datetime
 
 from scapy.all import *
 
 sys.path.append("src/")
-import saee
 import graphs
+import saee
 
 # conf.use_pcap = True
 
@@ -831,7 +831,7 @@ class neccessary_Tests:
             + " --"
             + bcolors.ENDC
         )
-        
+
         try:
             channel = subprocess.check_output(
                 [

@@ -1,15 +1,17 @@
+import codecs
+import os
+import subprocess
+from time import sleep
+
 from scapy.all import sendp
+
+import settings
+from ascii_art import dos_attack, wifi
+from Connection_monitors.AlivenessCheck import AllvCheck
+from Connection_monitors.DeauthMonitor import DeauthMon
 from fuzzer_init import *
 from Mngmt_frames.Construct_frame_fields import NUM_OF_FRAMES_TO_SEND
 from Msgs_colors import bcolors
-from Connection_monitors.DeauthMonitor import DeauthMon
-from Connection_monitors.AlivenessCheck import AllvCheck
-from ascii_art import dos_attack, wifi
-import os
-import codecs
-import subprocess
-import settings
-from time import sleep
 
 
 def nec_checks():

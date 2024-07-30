@@ -1,6 +1,5 @@
 import json
 
-
 config = json.load(open("src/config.json", "r"))
 
 targeted_AP = config["AP_info"]["AP_MAC_ADDRESS"]

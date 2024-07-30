@@ -1,25 +1,24 @@
 #!/usr/bin/python3
 import subprocess
-from time import sleep
 import sys
-import settings
-import ascii_art
+from time import sleep
 
-from Mngmt_frames.Beacon import Beacon
+import ascii_art
+import settings
+from Connection_monitors.AlivenessCheck import AllvCheck
+from Connection_monitors.DeauthMonitor import DeauthMon
+from Ctrl_frames.ControlFrames import ControlFrames
+from Data_frames.DataFrames import DataFrames
+from fuzzer_init import att_interface, real_ap_ssid, targeted_AP, targeted_STA
 from Mngmt_frames.AssoReq import AssoReq
 from Mngmt_frames.AssoResp import AssoResp
 from Mngmt_frames.Authentication import Authentication
+from Mngmt_frames.Beacon import Beacon
 from Mngmt_frames.Probe_request import ProbeReq
 from Mngmt_frames.Probe_response import Proberesp
 from Mngmt_frames.ReassoReq import ReassoReq
 from Mngmt_frames.ReassoResp import ReassoResp
-from Connection_monitors.DeauthMonitor import DeauthMon
-from Connection_monitors.AlivenessCheck import AllvCheck
 from Msgs_colors import bcolors
-from Ctrl_frames.ControlFrames import ControlFrames
-from Data_frames.DataFrames import DataFrames
-from fuzzer_init import *
-
 
 print(ascii_art.logo)
 print(
