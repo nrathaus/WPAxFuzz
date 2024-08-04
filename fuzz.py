@@ -22,30 +22,6 @@ from message_colors import bcolors
 
 issue_clears = False
 
-print(ascii_art.logo)
-print(("- " * 62) + "\n\n")
-print(
-    "\t\tThis tool is capable of fuzzing either any management, control or data frame of the 802.11\n"
-    "\t\tprotocol or the SAE exchange. For the management, control or data frames, you can choose\n"
-    '\t\teither the "standard" mode where all of the frames transmitted have valid size values or\n'
-    '\t\tthe "random" mode where the size value is random. The SAE fuzzing operation requires an AP\n'
-    "\t\tthat supports WPA3. Management, control or data frame fuzzing can be executed against any AP\n"
-    "\t\t(WPA2 or WPA3). Finally, a DoS attack vector is implemented, which exploits the findings of\n"
-    "\t\tthe management, control or data frames fuzzing.\n"
-)
-print(("- " * 62) + "\n\n")
-
-print("1) Fuzz Management Frames")
-print("2) Fuzz SAE exchange")
-print("3) Fuzz Control Frames")
-print(f"4) Fuzz Data Frames {bcolors.WARNING}(BETA){bcolors.ENDC}")
-print("5) DoS attack module\n\n")
-try:
-    choice = int(input("Enter a choice: "))
-except:
-    print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
-    sys.exit(0)
-
 
 def dos_attack_module():
     """dos_attack_module"""
@@ -520,6 +496,45 @@ def fuzz_management_frames():
 #
 # Main choices
 #
+
+print(ascii_art.logo)
+print(("- " * 62) + "\n\n")
+print(
+    "\t\tThis tool is capable of fuzzing either any management, control or data frame of the 802.11\n"
+    "\t\tprotocol or the SAE exchange. For the management, control or data frames, you can choose\n"
+    '\t\teither the "standard" mode where all of the frames transmitted have valid size values or\n'
+    '\t\tthe "random" mode where the size value is random. The SAE fuzzing operation requires an AP\n'
+    "\t\tthat supports WPA3. Management, control or data frame fuzzing can be executed against any AP\n"
+    "\t\t(WPA2 or WPA3). Finally, a DoS attack vector is implemented, which exploits the findings of\n"
+    "\t\tthe management, control or data frames fuzzing.\n"
+)
+print(("- " * 62) + "\n\n")
+
+
+# Check that the att_interface
+try:
+    check_interface = subprocess.check_output(
+        [f"iw dev {att_interface} info"],
+        shell=True,
+        stderr=subprocess.STDOUT
+    )
+except Exception as exception:
+    print(f"Unable to find: {att_interface}, due to: {exception.stdout.decode()}")
+    sys.exit(0)
+
+
+print("1) Fuzz Management Frames")
+print("2) Fuzz SAE exchange")
+print("3) Fuzz Control Frames")
+print(f"4) Fuzz Data Frames {bcolors.WARNING}(BETA){bcolors.ENDC}")
+print("5) DoS attack module\n\n")
+try:
+    choice = int(input("Enter a choice: "))
+except:
+    print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
+    sys.exit(0)
+
+
 if choice == 1:
     fuzz_management_frames()
 elif choice == 2:
