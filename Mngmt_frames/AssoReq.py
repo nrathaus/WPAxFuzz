@@ -3,6 +3,7 @@ import scapy.layers.dot11
 from random import randint
 from Mngmt_frames.Construct_frame_fields import Frame
 
+
 class AssoReq(Frame):
     def __init__(self, mode, frame_name, dest_addr, source_addr, interface, ssid):
         super(AssoReq, self).__init__()

