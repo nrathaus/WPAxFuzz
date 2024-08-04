@@ -18,7 +18,6 @@ import saee
 from message_colors import bcolors
 
 
-
 def signal_handler(signum, frame):
     """Signal Handler"""
     if signum == signal.SIGUSR2:
@@ -209,7 +208,7 @@ class Generate_Frames:
             [f"iwconfig {self.ATTACKING_INTERFACE} channel {self.AP_CHANNEL}"],
             shell=True,
         )
-        current_Channel = subprocess.check_output(
+        current_channel = subprocess.check_output(
             [f'iw {self.ATTACKING_INTERFACE} info | grep channel | cut -d " " -f2'],
             shell=True,
         )
@@ -218,7 +217,7 @@ class Generate_Frames:
             "\nAP_MAC changed to: "
             + self.AP_MAC
             + "\nChannel changed to: "
-            + current_Channel
+            + current_channel
         )
 
     def toString(self):
