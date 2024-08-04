@@ -1,6 +1,20 @@
-from scapy.all import Dot11Elt, Dot11ReassoReq
+"""Reasso Req"""
+from random import randint
 
-from Mngmt_frames.Construct_frame_fields import *
+import scapy.layers.dot11
+
+from management_frames.Construct_frame_fields import (
+    STANDARD_EXT_HT_CAPABILITIES,
+    STANDARD_HT_CAPABILITIES,
+    STANDARD_MAC_ADDRESS,
+    STANDARD_POWER_CAPS,
+    STANDARD_RM_CAPS,
+    STANDARD_RSN,
+    STANDARD_SUPP_CHANNELS,
+    SUPPL_RATES,
+    SUPPORTED_RATES,
+    Frame,
+)
 
 
 class ReassoReq(Frame):
@@ -11,7 +25,7 @@ class ReassoReq(Frame):
         self.dest_addr = dest_addr
         self.source_addr = source_addr
         self.interface = interface
-        self.ssid = Dot11Elt(ID="SSID", info=ssid, len=len(ssid))
+        self.ssid = scapy.layers.dot11.Dot11Elt(ID="SSID", info=ssid, len=len(ssid))
         self.fuzzer_state = {
             "empty": {"send_function": self.send_empty_reasso_req, "conn_loss": False},
             "capabilities": {
@@ -19,7 +33,7 @@ class ReassoReq(Frame):
                 "conn_loss": False,
             },
             "current AP": {
-                "send_function": self.send_reasso_req_with_rand_current_AP,
+                "send_function": self.send_reasso_req_with_rand_current_ap,
                 "conn_loss": False,
             },
             "supported rates": {
@@ -35,19 +49,19 @@ class ReassoReq(Frame):
                 "conn_loss": False,
             },
             "RSNs": {
-                "send_function": self.send_reasso_req_with_rand_RSN,
+                "send_function": self.send_reasso_req_with_rand_rsn,
                 "conn_loss": False,
             },
             "RM enabled capabilities": {
-                "send_function": self.send_reasso_req_with_rand_RM_caps,
+                "send_function": self.send_reasso_req_with_rand_rm_caps,
                 "conn_loss": False,
             },
             "HT capabilities": {
-                "send_function": self.send_reasso_req_with_rand_HT_capabilities,
+                "send_function": self.send_reasso_req_with_rand_ht_capabilities,
                 "conn_loss": False,
             },
             "extended HT capabilities": {
-                "send_function": self.send_reasso_req_with_rand_ext_HT_capabilities,
+                "send_function": self.send_reasso_req_with_rand_ext_ht_capabilities,
                 "conn_loss": False,
             },
             "source MACs": {
@@ -61,14 +75,18 @@ class ReassoReq(Frame):
         }
 
     def send_empty_reasso_req(self, mode):
-        return self.construct_MAC_header(
+        """send_empty_reasso_req"""
+        return self.construct_mac_header(
             2, self.dest_addr, self.source_addr, self.dest_addr
         )
 
-    def send_reasso_req_with_rand_RSN(self, mode):
-        reasso_req = Dot11ReassoReq(cap=4920, current_AP=STANDARD_MAC_ADDRESS)
+    def send_reasso_req_with_rand_rsn(self, mode):
+        """send_reasso_req_with_rand_rsn"""
+        reasso_req = scapy.layers.dot11.Dot11ReassoReq(
+            cap=4920, current_AP=STANDARD_MAC_ADDRESS
+        )
         frame = (
-            self.construct_MAC_header(
+            self.construct_mac_header(
                 2, self.dest_addr, self.source_addr, self.dest_addr
             )
             / reasso_req
@@ -77,7 +95,7 @@ class ReassoReq(Frame):
             / SUPPL_RATES
             / STANDARD_POWER_CAPS
             / STANDARD_SUPP_CHANNELS
-            / self.construct_RSN(mode)
+            / self.construct_rsn(mode)
             / STANDARD_RM_CAPS
             / STANDARD_HT_CAPABILITIES
             / STANDARD_EXT_HT_CAPABILITIES
@@ -85,10 +103,13 @@ class ReassoReq(Frame):
         return frame
 
     def send_reasso_req_with_rand_source_mac(self, mode):
-        reasso_req = Dot11ReassoReq(cap=4920, current_AP=STANDARD_MAC_ADDRESS)
+        """send_reasso_req_with_rand_source_mac"""
+        reasso_req = scapy.layers.dot11.Dot11ReassoReq(
+            cap=4920, current_AP=STANDARD_MAC_ADDRESS
+        )
         frame = (
-            self.construct_MAC_header(
-                2, self.dest_addr, self.generate_MAC(), self.dest_addr
+            self.construct_mac_header(
+                2, self.dest_addr, self.generate_mac(), self.dest_addr
             )
             / reasso_req
             / self.ssid
@@ -103,10 +124,13 @@ class ReassoReq(Frame):
         )
         return frame
 
-    def send_reasso_req_with_rand_current_AP(self, mode):
-        reasso_req = Dot11ReassoReq(cap=4920, current_AP=self.generate_MAC())
+    def send_reasso_req_with_rand_current_ap(self, mode):
+        """send_reasso_req_with_rand_current_ap"""
+        reasso_req = scapy.layers.dot11.Dot11ReassoReq(
+            cap=4920, current_AP=self.generate_mac()
+        )
         frame = (
-            self.construct_MAC_header(
+            self.construct_mac_header(
                 2, self.dest_addr, self.source_addr, self.dest_addr
             )
             / reasso_req
@@ -123,11 +147,12 @@ class ReassoReq(Frame):
         return frame
 
     def send_reasso_req_with_rand_capabilities(self, mode):
-        reasso_req = Dot11ReassoReq(
+        """send_reasso_req_with_rand_capabilities"""
+        reasso_req = scapy.layers.dot11.Dot11ReassoReq(
             cap=randint(1, 9999), current_AP=STANDARD_MAC_ADDRESS
         )
         frame = (
-            self.construct_MAC_header(
+            self.construct_mac_header(
                 2, self.dest_addr, self.source_addr, self.dest_addr
             )
             / reasso_req
@@ -144,9 +169,12 @@ class ReassoReq(Frame):
         return frame
 
     def send_reasso_req_with_rand_supp_speed(self, mode):
-        reasso_req = Dot11ReassoReq(cap=4920, current_AP=STANDARD_MAC_ADDRESS)
+        """send_reasso_req_with_rand_supp_speed"""
+        reasso_req = scapy.layers.dot11.Dot11ReassoReq(
+            cap=4920, current_AP=STANDARD_MAC_ADDRESS
+        )
         frame = (
-            self.construct_MAC_header(
+            self.construct_mac_header(
                 2, self.dest_addr, self.source_addr, self.dest_addr
             )
             / reasso_req
@@ -161,10 +189,13 @@ class ReassoReq(Frame):
         )
         return frame
 
-    def send_reasso_req_with_rand_HT_capabilities(self, mode):
-        reasso_req = Dot11ReassoReq(cap=4920, current_AP=STANDARD_MAC_ADDRESS)
+    def send_reasso_req_with_rand_ht_capabilities(self, mode):
+        """send_reasso_req_with_rand_ht_capabilities"""
+        reasso_req = scapy.layers.dot11.Dot11ReassoReq(
+            cap=4920, current_AP=STANDARD_MAC_ADDRESS
+        )
         frame = (
-            self.construct_MAC_header(
+            self.construct_mac_header(
                 2, self.dest_addr, self.source_addr, self.dest_addr
             )
             / reasso_req
@@ -175,15 +206,18 @@ class ReassoReq(Frame):
             / STANDARD_SUPP_CHANNELS
             / STANDARD_RSN
             / STANDARD_RM_CAPS
-            / self.generate_HT_capabilities(mode)
+            / self.generate_ht_capabilities(mode)
             / STANDARD_EXT_HT_CAPABILITIES
         )
         return frame
 
-    def send_reasso_req_with_rand_ext_HT_capabilities(self, mode):
-        reasso_req = Dot11ReassoReq(cap=4920, current_AP=STANDARD_MAC_ADDRESS)
+    def send_reasso_req_with_rand_ext_ht_capabilities(self, mode):
+        """send_reasso_req_with_rand_ext_ht_capabilities"""
+        reasso_req = scapy.layers.dot11.Dot11ReassoReq(
+            cap=4920, current_AP=STANDARD_MAC_ADDRESS
+        )
         frame = (
-            self.construct_MAC_header(
+            self.construct_mac_header(
                 2, self.dest_addr, self.source_addr, self.dest_addr
             )
             / reasso_req
@@ -195,14 +229,17 @@ class ReassoReq(Frame):
             / STANDARD_RSN
             / STANDARD_RM_CAPS
             / STANDARD_HT_CAPABILITIES
-            / self.generate_extended_HT_capabilities(mode)
+            / self.generate_extended_ht_capabilities(mode)
         )
         return frame
 
     def send_reasso_req_with_rand_power_caps(self, mode):
-        reasso_req = Dot11ReassoReq(cap=4920, current_AP=STANDARD_MAC_ADDRESS)
+        """send_reasso_req_with_rand_power_caps"""
+        reasso_req = scapy.layers.dot11.Dot11ReassoReq(
+            cap=4920, current_AP=STANDARD_MAC_ADDRESS
+        )
         frame = (
-            self.construct_MAC_header(
+            self.construct_mac_header(
                 2, self.dest_addr, self.source_addr, self.dest_addr
             )
             / reasso_req
@@ -219,9 +256,12 @@ class ReassoReq(Frame):
         return frame
 
     def send_reasso_req_with_rand_supp_channels(self, mode):
-        reasso_req = Dot11ReassoReq(cap=4920, current_AP=STANDARD_MAC_ADDRESS)
+        """send_reasso_req_with_rand_supp_channels"""
+        reasso_req = scapy.layers.dot11.Dot11ReassoReq(
+            cap=4920, current_AP=STANDARD_MAC_ADDRESS
+        )
         frame = (
-            self.construct_MAC_header(
+            self.construct_mac_header(
                 2, self.dest_addr, self.source_addr, self.dest_addr
             )
             / reasso_req
@@ -237,10 +277,13 @@ class ReassoReq(Frame):
         )
         return frame
 
-    def send_reasso_req_with_rand_RM_caps(self, mode):
-        reasso_req = Dot11ReassoReq(cap=4920, current_AP=STANDARD_MAC_ADDRESS)
+    def send_reasso_req_with_rand_rm_caps(self, mode):
+        """send_reasso_req_with_rand_rm_caps"""
+        reasso_req = scapy.layers.dot11.Dot11ReassoReq(
+            cap=4920, current_AP=STANDARD_MAC_ADDRESS
+        )
         frame = (
-            self.construct_MAC_header(
+            self.construct_mac_header(
                 2, self.dest_addr, self.source_addr, self.dest_addr
             )
             / reasso_req
@@ -250,18 +293,19 @@ class ReassoReq(Frame):
             / STANDARD_POWER_CAPS
             / STANDARD_SUPP_CHANNELS
             / STANDARD_RSN
-            / self.generate_RM_enabled_capabilities(mode)
+            / self.generate_rm_enabled_capabilities(mode)
             / STANDARD_HT_CAPABILITIES
             / STANDARD_EXT_HT_CAPABILITIES
         )
         return frame
 
     def send_reasso_req_with_all_fields_rand(self, mode):
-        reasso_req = Dot11ReassoReq(
-            cap=randint(1, 9999), current_AP=self.generate_MAC()
+        """send_reasso_req_with_all_fields_rand"""
+        reasso_req = scapy.layers.dot11.Dot11ReassoReq(
+            cap=randint(1, 9999), current_AP=self.generate_mac()
         )
         frame = (
-            self.construct_MAC_header(
+            self.construct_mac_header(
                 2, self.dest_addr, self.source_addr, self.dest_addr
             )
             / reasso_req
@@ -269,12 +313,13 @@ class ReassoReq(Frame):
             / self.generate_supp_speed(mode)
             / self.generate_power_capability(mode)
             / self.generate_supported_channels(mode)
-            / self.construct_RSN(mode)
-            / self.generate_RM_enabled_capabilities(mode)
-            / self.generate_HT_capabilities(mode)
-            / self.generate_extended_HT_capabilities(mode)
+            / self.construct_rsn(mode)
+            / self.generate_rm_enabled_capabilities(mode)
+            / self.generate_ht_capabilities(mode)
+            / self.generate_extended_ht_capabilities(mode)
         )
         return frame
 
     def fuzz_reasso_req(self):
+        """fuzz_reasso_req"""
         self.fuzz(self.mode, self.fuzzer_state, self.interface)

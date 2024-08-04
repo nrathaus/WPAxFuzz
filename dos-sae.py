@@ -9,34 +9,17 @@ import threading
 import time
 from datetime import datetime
 
-import scapy.layers.dot11
 import scapy.all
+import scapy.layers.dot11
 
 sys.path.append("src/")
 import graphs
 import saee
-
-# conf.use_pcap = True
-
-
-class bcolors:
-    """Background colors"""
-
-    HEADER = "\033[95m"
-    OKBLUE = "\033[94m"
-    OKCYAN = "\033[96m"
-    OKGREEN = "\033[92m"
-    WARNING = "\033[93m"
-    FAIL = "\033[91m"
-    ENDC = "\033[0m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
-    STH = "\33[100m"
-    STH1 = "\33[104m"
-    STH2 = "\33[5m"
+from message_colors import bcolors
 
 
-def signal_Handler(signum, frame):
+
+def signal_handler(signum, frame):
     """Signal Handler"""
     if signum == signal.SIGUSR2:
         while toStop == 1:
@@ -49,11 +32,11 @@ def signal_Handler(signum, frame):
         pass
 
 
-signal.signal(signal.SIGUSR2, signal_Handler)
+signal.signal(signal.SIGUSR2, signal_handler)
 
 
-global deauth_to_Send_stop
-deauth_to_Send_stop = 0
+global deauth_to_send_stop
+deauth_to_send_stop = 0
 
 
 class deauth_Monitor(threading.Thread):
@@ -63,7 +46,7 @@ class deauth_Monitor(threading.Thread):
         scapy.all.sniff(
             iface=infos.ATTACKING_INTERFACE,
             store=0,
-            stop_filter=self.stopfilter,
+            stop_filter=self.stop_filter,
             filter="(ether dst "
             + infos.STA_MAC
             + " and ether src "
@@ -75,12 +58,11 @@ class deauth_Monitor(threading.Thread):
             + ")",
         )
 
-    def stopfilter(self, packet):
+    def stop_filter(self, packet):
         """Stop Filter"""
-        global deauth_to_Send_stop
-        global stop_ALL_threads
+        global deauth_to_send_stop
         keyword = "Deauthentification"
-        if stop_ALL_threads == 1:
+        if stop_all_threads == 1:
             return True
 
         if (
@@ -88,29 +70,31 @@ class deauth_Monitor(threading.Thread):
             or keyword in packet.summary()
         ):
             print(bcolors.FAIL + "\nFound Deauthentication frame" + bcolors.ENDC)
-            time_Found = datetime.now().strftime("%H:%M:%S")
+            time_found = datetime.now().strftime("%H:%M:%S")
             subprocess.call(
                 [
-                    f"echo {time_Found}. Found deauth from {packet[scapy.layers.dot11.Dot11].addr2} "
-                    f"to {packet[scapy.layers.dot11.Dot11].addr1} >> {deauth_Path} during: {state.message}"
+                    "echo ",
+                    f"{time_found}. Found deauth from {packet[scapy.layers.dot11.Dot11].addr2} "
+                    f"to {packet[scapy.layers.dot11.Dot11].addr1} >> {deauth_Path} during: {state.message}",
                 ],
                 shell=True,
             )
-            deauth_to_Send_stop = 1
+            deauth_to_send_stop = 1
 
             return False
 
         if packet.haslayer(scapy.layers.dot11.Dot11Disas):
             print(f"{bcolors.FAIL}\nFound Disassociation frame{bcolors.ENDC}")
-            time_Found = datetime.now().strftime("%H:%M:%S")
+            time_found = datetime.now().strftime("%H:%M:%S")
             subprocess.call(
                 [
-                    f"echo {time_Found}. Found disas from {packet[scapy.layers.dot11.Dot11].addr2} to "
-                    f"{packet[scapy.layers.dot11.Dot11].addr1} >> {deauth_Path} during: {state.message}"
+                    "echo"
+                    f"{time_found}. Found disas from {packet[scapy.layers.dot11.Dot11].addr2} to "
+                    f"{packet[scapy.layers.dot11.Dot11].addr1} >> {deauth_Path} during: {state.message}",
                 ],
                 shell=True,
             )
-            deauth_to_Send_stop = 1
+            deauth_to_send_stop = 1
             return False
 
         return False
@@ -142,7 +126,7 @@ class Generate_Frames:
     def generate_Authbody(self, auth_Algorithm, sequence_Number, status1):
         """Generate Authbody"""
         auth_Body = (
-            RadioTap()
+            scapy.layers.dot11.RadioTap()
             / scapy.layers.dot11.Dot11(
                 type=0,
                 subtype=11,
@@ -206,9 +190,9 @@ class Generate_Frames:
         frame = auth_Body / group / scalar / finite
         return frame
 
-    def send_Frame(self, frame, burst_Number):
+    def send_frame(self, frame, burst_number):
         scapy.all.sendp(
-            frame, count=burst_Number, iface=self.ATTACKING_INTERFACE, verbose=0
+            frame, count=burst_number, iface=self.ATTACKING_INTERFACE, verbose=0
         )
 
     def change_to_diff_Frequency(self):
@@ -250,156 +234,178 @@ class Generate_Frames:
 
 class save_State:
     def __init__(self):
-        self.order_Values = []
+        self.order_values = []
         self.dc_values = []
-        self.frames_to_Send = 1
-        self.auth_values_to_Try = 0
-        self.sequence_values_to_Try = 1
-        self.status_values_to_Try = 0
+        self.frames_to_send = 1
+        self.auth_values_to_try = 0
+        self.sequence_values_to_try = 1
+        self.status_values_to_try = 0
         self.identifier = 0
         self.message = "sth"
 
-    def setValues(
+    def set_values(
         self,
-        frames_to_Send,
-        auth_values_to_Try,
-        sequence_values_to_Try,
-        status_values_to_Try,
+        frames_to_send,
+        auth_values_to_try,
+        sequence_values_to_try,
+        status_values_to_try,
         identifier,
     ):
         """Set Values"""
-        self.frames_to_Send = frames_to_Send
-        self.auth_values_to_Try = auth_values_to_Try
-        self.sequence_values_to_Try = sequence_values_to_Try
-        self.status_values_to_Try = status_values_to_Try
+        self.frames_to_send = frames_to_send
+        self.auth_values_to_try = auth_values_to_try
+        self.sequence_values_to_try = sequence_values_to_try
+        self.status_values_to_try = status_values_to_try
         self.identifier = identifier
 
     def __eq__(self, other):
         return self.message == other.message
 
-    def append_Order(self, listt):
+    def append_order(self, list_item):
         """Append Order"""
         found = 0
-        if not self.order_Values:
-            self.order_Values.append(listt)
+        if not self.order_values:
+            self.order_values.append(list_item)
         else:
-            for a in self.order_Values:
-                if a[0] == listt[0] and a[1] == listt[1] and a[2] == listt[2]:
+            for a in self.order_values:
+                if (
+                    a[0] == list_item[0]
+                    and a[1] == list_item[1]
+                    and a[2] == list_item[2]
+                ):
                     found = 1
             if found == 0:
-                self.order_Values.append(listt)
+                self.order_values.append(list_item)
 
-    def append_Dc(self, listt):
+    def append_cc(self, list_item):
         """Append DC"""
         found = 0
         if not self.dc_values:
-            self.dc_values.append(listt)
+            self.dc_values.append(list_item)
         else:
             for a in self.dc_values:
-                if a[0] == listt[0] and a[1] == listt[1] and a[2] == listt[2]:
+                if (
+                    a[0] == list_item[0]
+                    and a[1] == list_item[1]
+                    and a[2] == list_item[2]
+                ):
                     found = 1
                     break
+
             if found == 0:
-                self.dc_values.append(listt)
+                self.dc_values.append(list_item)
 
 
 class fuzz:
     def __init__(self):
-        self.total_frames_to_Send = 50
+        self.total_frames_to_send = 50
 
-        self.auth_values_to_Try = [0, 1, 2, 3, 200]
-        self.sequence_values_to_Try = [1, 2, 3, 4, 200]
-        self.status_values_to_Try = [0, 1, 200]
+        self.auth_values_to_try = [0, 1, 2, 3, 200]
+        self.sequence_values_to_try = [1, 2, 3, 4, 200]
+        self.status_values_to_try = [0, 1, 200]
 
-    def construct_and_Send(self, identifier, burst_Number):
+    def construct_and_send(self, identifier, burst_number):
         """Construct and Send"""
-        global stopThread
         time.sleep(0.01)
 
-        for auth_value in self.auth_values_to_Try:
-            for sequence_value in self.sequence_values_to_Try:
-                for status_value in self.status_values_to_Try:
-                    state.setValues(
-                        self.total_frames_to_Send,
+        for auth_value in self.auth_values_to_try:
+            for sequence_value in self.sequence_values_to_try:
+                for status_value in self.status_values_to_try:
+                    state.set_values(
+                        self.total_frames_to_send,
                         auth_value,
                         sequence_value,
                         status_value,
                         identifier,
                     )
 
-                    self.sendd(
+                    self.send_packet(
                         auth_value,
                         sequence_value,
                         status_value,
                         identifier,
-                        burst_Number,
+                        burst_number,
                     )
 
-    def construct_and_Send2(self, identifier):
+    def construct_and_send_2(self, identifier):
         """Construct and Send2"""
         time.sleep(10)
-        for a in state.order_Values:
+        for a in state.order_values:
             auth_valuee = a[0]
-            state.auth_values_to_Try = auth_valuee
+            state.auth_values_to_try = auth_valuee
 
             sequence_valuee = a[1]
-            state.sequence_values_to_Try = sequence_valuee
+            state.sequence_values_to_try = sequence_valuee
 
             status_value = a[2]
-            state.status_values_to_Try = status_value
+            state.status_values_to_try = status_value
 
-            self.sendd(auth_valuee, sequence_valuee, status_value, identifier, 128)
+            self.send_packet(
+                auth_valuee, sequence_valuee, status_value, identifier, 128
+            )
 
-    def fuzz_Empty_Bodies(self, burst_Number):
-        self.construct_and_Send(1, burst_Number)
+    def fuzz_empty_bodies(self, burst_number):
+        """fuzz_empty_bodies"""
+        self.construct_and_send(1, burst_number)
 
-    def fuzz_validCommit_EmptyBodies(self, burst_Number):
-        self.construct_and_Send(2, burst_Number)
+    def fuzz_valid_commit_empty_bodies(self, burst_number):
+        """fuzz_valid_commit_empty_bodies"""
+        self.construct_and_send(2, burst_number)
 
-    def fuzz_validCommit_goodConfirm(self, burst_Number):
-        self.construct_and_Send(3, burst_Number)
+    def fuzz_valid_commit_good_confirm(self, burst_number):
+        """fuzz_valid_commit_good_confirm"""
+        self.construct_and_send(3, burst_number)
 
-    def fuzz_validCommit_badConfirm(self, burst_Number):
-        self.construct_and_Send(4, burst_Number)
+    def fuzz_valid_commit_bad_confirm(self, burst_number):
+        """fuzz_valid_commit_bad_confirm"""
+        self.construct_and_send(4, burst_number)
 
-    def fuzz_Commit(self, burst_Number):
-        self.construct_and_Send(5, burst_Number)
+    def fuzz_commit(self, burst_number):
+        """fuzz_commit"""
+        self.construct_and_send(5, burst_number)
 
-    def fuzz_goodConfirm(self, burst_Number):
-        self.construct_and_Send(6, burst_Number)
+    def fuzz_good_confirm(self, burst_number):
+        """fuzz_good_confirm"""
+        self.construct_and_send(6, burst_number)
 
-    def fuzz_badConfirm(self, burst_Number):
-        self.construct_and_Send(7, burst_Number)
+    def fuzz_bad_confirm(self, burst_number):
+        """fuzz_bad_confirm"""
+        self.construct_and_send(7, burst_number)
 
     def cyrcle1(self):
-        self.fuzz_Empty_Bodies(1)
-        self.fuzz_validCommit_EmptyBodies(1)
-        self.fuzz_validCommit_goodConfirm(1)
-        self.fuzz_validCommit_badConfirm(1)
-        self.fuzz_Commit(1)
-        self.fuzz_goodConfirm(1)
-        self.fuzz_badConfirm(1)
+        """cyrcle1"""
+        self.fuzz_empty_bodies(1)
+        self.fuzz_valid_commit_empty_bodies(1)
+        self.fuzz_valid_commit_good_confirm(1)
+        self.fuzz_valid_commit_bad_confirm(1)
+        self.fuzz_commit(1)
+        self.fuzz_good_confirm(1)
+        self.fuzz_bad_confirm(1)
 
     def cyrcle2(self):
+        """cyrcle2"""
         time.sleep(1)
         self.cyrcle1()
 
     def cyrcle3(self):
+        """cyrcle3"""
         time.sleep(1)
-        self.construct_and_Send2(1)
-        self.construct_and_Send2(2)
-        self.construct_and_Send2(3)
-        self.construct_and_Send2(4)
-        self.construct_and_Send2(5)
-        self.construct_and_Send2(6)
-        self.construct_and_Send2(7)
+        self.construct_and_send_2(1)
+        self.construct_and_send_2(2)
+        self.construct_and_send_2(3)
+        self.construct_and_send_2(4)
+        self.construct_and_send_2(5)
+        self.construct_and_send_2(6)
+        self.construct_and_send_2(7)
 
         time.sleep(1)
 
     def cyrcle4(self):
+        """cyrcle4"""
         self.cyrcle3()
 
-    def initiate_Fuzzing_LOGICAL_MODE(self):
+    def initiate_fuzzing_logical_mode(self):
+        """initiate_fuzzing_logical_mode"""
         self.cyrcle1()
         if CHANNEL_DIFFERENT_FREQUENCY != "00":
             infos.change_to_diff_Frequency()
@@ -413,22 +419,26 @@ class fuzz:
             self.cyrcle4()
             infos.change_to_diff_Frequency()
 
-    def initiate_Fuzzing_EXTENSIVE_MODE(self):
-        self.auth_values_to_Try = list(range(0, 65534))
-        self.sequence_values_to_Try = list(range(0, 65534))
-        self.status_values_to_Try = list(range(0, 65534))
-        self.initiate_Fuzzing_LOGICAL_MODE()
+    def initiate_fuzzing_extensive_mode(self):
+        """initiate_fuzzing_extensive_mode"""
+        self.auth_values_to_try = list(range(0, 65534))
+        self.sequence_values_to_try = list(range(0, 65534))
+        self.status_values_to_try = list(range(0, 65534))
+        self.initiate_fuzzing_logical_mode()
 
-    def sendd(self, auth_value, sequence_value, status_value, identifier, burst_Number):
-        global stopThread
-        global deauth_to_Send_stop
-        deauth_to_Send_stop = 0
+    def send_packet(
+        self, auth_value, sequence_value, status_value, identifier, burst_number
+    ):
+        """send_packet"""
+        global stop_thread
+        global deauth_to_send_stop
+        deauth_to_send_stop = 0
         toprint = 1
-        stopThread = 0
+        stop_thread = 0
         firs = 1
-        self.total_frames_to_Send = 50
+        self.total_frames_to_send = 50
 
-        for _ in range(0, self.total_frames_to_Send):
+        for _ in range(0, self.total_frames_to_send):
             if identifier == 1:
                 if firs == 1:
                     frame = infos.generate_Authbody(
@@ -437,43 +447,43 @@ class fuzz:
                     firs = 0
                 message = " eempty body frames with values : "
 
-                infos.send_Frame(frame, burst_Number)
+                infos.send_frame(frame, burst_number)
             elif identifier == 2:
                 if firs == 1:
-                    self.total_frames_to_Send = 25
+                    self.total_frames_to_send = 25
                     frame = infos.generate_Custom_Commit(3, 1, 0)
                     frame2 = infos.generate_Authbody(
                         auth_value, sequence_value, status_value
                     )
                     firs = 0
                 message = " valid commits folowed by empty body frames with values: "
-                infos.send_Frame(frame, burst_Number)
+                infos.send_frame(frame, burst_number)
                 time.sleep(0.05)
-                infos.send_Frame(frame2, burst_Number)
+                infos.send_frame(frame2, burst_number)
             elif identifier == 3:
                 if firs == 1:
-                    self.total_frames_to_Send = 25
+                    self.total_frames_to_send = 25
                     frame = infos.generate_Custom_Commit(3, 1, 0)
                     frame2 = infos.generate_Custom_Confirm(
                         auth_value, sequence_value, status_value, 0
                     )
                     firs = 0
                 message = " valid commits folowed by confirm with send-confirm value = 0 ,, with body values : "
-                infos.send_Frame(frame, burst_Number)
+                infos.send_frame(frame, burst_number)
                 time.sleep(0.05)
-                infos.send_Frame(frame2, burst_Number)
+                infos.send_frame(frame2, burst_number)
             elif identifier == 4:
                 if firs == 1:
-                    self.total_frames_to_Send = 25
+                    self.total_frames_to_send = 25
                     frame = infos.generate_Custom_Commit(3, 1, 0)
                     frame2 = infos.generate_Custom_Confirm(
                         auth_value, sequence_value, status_value, 1
                     )
                     firs = 0
                 message = " valid commits folowed by confirm with send-confirm value = 2 ,, with body values : "
-                infos.send_Frame(frame, burst_Number)
+                infos.send_frame(frame, burst_number)
                 time.sleep(0.05)
-                infos.send_Frame(frame2, burst_Number)
+                infos.send_frame(frame2, burst_number)
 
             elif identifier == 5:
                 if firs == 1:
@@ -482,7 +492,7 @@ class fuzz:
                     )
                     firs = 0
                 message = " commits with body values : "
-                infos.send_Frame(frame, burst_Number)
+                infos.send_frame(frame, burst_number)
 
             elif identifier == 6:
                 if firs == 1:
@@ -491,7 +501,7 @@ class fuzz:
                         auth_value, sequence_value, status_value, 0
                     )
                 message = " confirms with send-confirm value = 0 ,, with body values : "
-                infos.send_Frame(frame, burst_Number)
+                infos.send_frame(frame, burst_number)
 
             elif identifier == 7:
                 if firs == 1:
@@ -500,30 +510,30 @@ class fuzz:
                         auth_value, sequence_value, status_value, 1
                     )
                 message = " confirms with send-confirm value = 2 ,, with body values : "
-                infos.send_Frame(frame, burst_Number)
+                infos.send_frame(frame, burst_number)
 
             if toprint == 1:
                 self.logging(
-                    auth_value, sequence_value, status_value, message, burst_Number
+                    auth_value, sequence_value, status_value, message, burst_number
                 )
                 toprint = 0
                 print("\n")
 
         time.sleep(4)
-        stopThread = 1
+        stop_thread = 1
         if MONITORING_INTERFACE == "00":
-            if deauth_to_Send_stop == 1:
+            if deauth_to_send_stop == 1:
                 print(
                     "\nFound deauthentication frames during the specific attack. "
                     "Pausing 60 sec before continuing to the next case."
                 )
                 time.sleep(60)
-                deauth_to_Send_stop = 0
+                deauth_to_send_stop = 0
         time.sleep(4)
 
     def logging(self, auth, seq, stat, message, burst_number):
         """logging"""
-        string = f"Sending {self.total_frames_to_Send}{message}{auth} {seq} {stat}"
+        string = f"Sending {self.total_frames_to_send}{message}{auth} {seq} {stat}"
 
         if int(infos.AP_CHANNEL) > 15:
             string = string + " ...  5G"
@@ -536,32 +546,32 @@ class fuzz:
 
 class nonresponsiveness_Monitor(threading.Thread):
     def run(self):
-        global stop_ALL_threads
-        ip_prefix = self.find_my_Ip()
-        sta_Ip = self.find_sta_Ip(ip_prefix)
+        global stop_all_threads
+        ip_prefix = self.find_my_ip_address()
+        sta_ip_address = self.find_sta_ip_address(ip_prefix)
         global start
         global toStop
-        global stopThread
-        stopThread = 1
+        global stop_thread
+        stop_thread = 1
         toStop = 0
         first = 0
         while True:
-            if stop_ALL_threads == 1:
+            if stop_all_threads == 1:
                 break
-            if stopThread == 0:
-                ping_Response = self.pingg(sta_Ip)
+            if stop_thread == 0:
+                ping_response = self.ping_target(sta_ip_address)
 
-                if ping_Response == "notfound":
+                if ping_response == "notfound":
                     if first == 0:
                         first = 1
                         startT = time.time()
 
                         new_List = list()
-                        new_List.append(state.auth_values_to_Try)
-                        new_List.append(state.sequence_values_to_Try)
-                        new_List.append(state.status_values_to_Try)
+                        new_List.append(state.auth_values_to_try)
+                        new_List.append(state.sequence_values_to_try)
+                        new_List.append(state.status_values_to_try)
 
-                        state.append_Order(new_List)
+                        state.append_order(new_List)
 
                     print("Pinging STOPED responding")
 
@@ -570,17 +580,12 @@ class nonresponsiveness_Monitor(threading.Thread):
                         first = 0
                         endT = time.time()
                         time_Unresponsive = endT - startT
-                        time_Found = datetime.now().strftime("%H:%M:%S")
+                        time_found = datetime.now().strftime("%H:%M:%S")
                         subprocess.call(
                             [
-                                "echo "
-                                + str(time_Found)
-                                + ". Came back online after  "
-                                + str(time_Unresponsive)
-                                + " of unresponsivness   During: "
-                                + state.message
-                                + " >> "
-                                + nonresponsive_Path
+                                "echo ",
+                                f"{time_found}. Came back online after  {time_Unresponsive} of "
+                                f"unresponsivness   During: {state.message} >> {nonresponsive_Path}",
                             ],
                             shell=True,
                         )
@@ -595,10 +600,10 @@ class nonresponsiveness_Monitor(threading.Thread):
                 os.kill(os.getpid(), signal.SIGUSR2)
 
                 if first == 1:
-                    ping_Response = self.pingg(sta_Ip)
+                    ping_response = self.ping_target(sta_ip_address)
 
                     fir = 1
-                    while ping_Response == "notfound" or ping_Response == "1":
+                    while ping_response == "notfound" or ping_response == "1":
                         print("Pinging STOPED responding")
                         if fir == 1:
                             star = time.time()
@@ -606,38 +611,33 @@ class nonresponsiveness_Monitor(threading.Thread):
                         en = time.time()
                         if en - star > 20:
                             print("calling MTI")
-                            sta_Ip = self.find_sta_Ip(ip_prefix)
+                            sta_ip_address = self.find_sta_ip_address(ip_prefix)
 
-                        ping_Response = self.pingg(sta_Ip)
+                        ping_response = self.ping_target(sta_ip_address)
 
                     first = 0
                     endT = time.time()
                     time_Unresponsive = endT - startT
-                    time_Found = datetime.now().strftime("%H:%M:%S")
+                    time_found = datetime.now().strftime("%H:%M:%S")
                     subprocess.call(
                         [
-                            "echo "
-                            + str(time_Found)
-                            + ". Came back online after  "
-                            + str(time_Unresponsive)
-                            + " of unresponsivness   During: "
-                            + state.message
-                            + " >> "
-                            + nonresponsive_Path
+                            "echo ",
+                            f"{time_found}. Came back online after  {time_Unresponsive}"
+                            f" of unresponsivness   During: {state.message} >> {nonresponsive_Path}",
                         ],
                         shell=True,
                     )
                 time.sleep(1)
                 toStop = 0
                 start = 1
-                stopThread = 0
+                stop_thread = 0
 
-    def pingg(self, sta_Ip):
-        """pingg"""
+    def ping_target(self, sta_ip_address):
+        """ping_target"""
         try:
             sa = subprocess.check_output(
                 [
-                    f"ping -f -c 1 -W 1 {sta_Ip} -I {MONITORING_INTERFACE}"
+                    f"ping -f -c 1 -W 1 {sta_ip_address} -I {MONITORING_INTERFACE}"
                     " > /dev/null && echo found || echo notfound"
                 ],
                 shell=True,
@@ -648,7 +648,7 @@ class nonresponsiveness_Monitor(threading.Thread):
             print(f"An exception has occured: {e}")
             return "1"
 
-    def find_my_Ip(self):
+    def find_my_ip_address(self):
         """Find my IP"""
         while True:
             print(
@@ -667,11 +667,12 @@ class nonresponsiveness_Monitor(threading.Thread):
             print("Could not retrieve your ip address! Retrying in 3 seconds.")
             time.sleep(3)
 
-    def find_sta_Ip(self, ip_prefix):
+    def find_sta_ip_address(self, ip_prefix):
         """Find STA IP"""
         temp = ip_prefix
         print(
-            f"\n\n{bcolors.OKGREEN}----Pinging all hosts with an ip prefix of: {ip_prefix}.xx ----{bcolors.ENDC}"
+            f"\n\n{bcolors.OKGREEN}----Pinging all hosts with an ip prefix of: "
+            f"{ip_prefix}.xx ----{bcolors.ENDC}"
         )
         found = 0
         fe = 1
@@ -693,29 +694,29 @@ class nonresponsiveness_Monitor(threading.Thread):
                 ip_prefix = temp
 
             try:
-                sta_Ip = subprocess.check_output(
+                sta_ip_address = subprocess.check_output(
                     [
                         f"arp -a | grep {infos.STA_MAC.lower()}"
                         ' | tr -d "()" | cut -d " " -f2'
                     ],
                     shell=True,
                 )
-                sta_Ip = sta_Ip[:-1]
+                sta_ip_address = sta_ip_address[:-1]
 
             except Exception:
                 print("arp -a exception.")
-                sta_Ip = "1"
+                sta_ip_address = "1"
 
-            if len(sta_Ip) > 5:
+            if len(sta_ip_address) > 5:
                 print(
                     "RETRIEVED IP OF MAC: "
                     + TARGETED_STA_MAC_ADDRESS
                     + "   is   "
-                    + sta_Ip
+                    + sta_ip_address
                     + "\n"
                 )
                 found = 1
-                responsive = self.pingg(sta_Ip)
+                responsive = self.ping_target(sta_ip_address)
                 while responsive == "notfound" or responsive == "1":
                     if responsive == "1":
                         print(
@@ -724,10 +725,10 @@ class nonresponsiveness_Monitor(threading.Thread):
                         time.sleep(10)
                     else:
                         print("Pinging STOPED responding")
-                    responsive = self.pingg(sta_Ip)
+                    responsive = self.ping_target(sta_ip_address)
 
                 print("is responsive")
-                return sta_Ip
+                return sta_ip_address
 
             print(
                 "COULD NOT FIND IP OF MAC: "
@@ -741,11 +742,11 @@ class nonresponsiveness_Monitor(threading.Thread):
                     print("Disconnected")
 
                     new_List = list()
-                    new_List.append(state.auth_values_to_Try)
-                    new_List.append(state.sequence_values_to_Try)
-                    new_List.append(state.status_values_to_Try)
+                    new_List.append(state.auth_values_to_try)
+                    new_List.append(state.sequence_values_to_try)
+                    new_List.append(state.status_values_to_try)
 
-                    state.append_Dc(new_List)
+                    state.append_cc(new_List)
 
                     subprocess.call(
                         [f"echo DISCONNECTED >> {nonresponsive_Path}"], shell=True
@@ -754,22 +755,26 @@ class nonresponsiveness_Monitor(threading.Thread):
             time.sleep(0.5)
 
 
-class neccessary_Tests:
+class neccessary_tests:
+    """neccessary_tests"""
+
     def __init__(self):
         self.check_monitor_mode()
         self.check_channel()
         self.search_AP()
-        self.check_sae_Exchange()
+        self.check_sae_exchange()
         time.sleep(3)
 
     def thread_function(self):
+        """thread_function"""
         time.sleep(0.1)
 
         frame = infos.generate_Custom_Confirm(3, 2, 0, 0)
         print("Sending CONFIRM")
         scapy.all.sendp(frame, iface=infos.ATTACKING_INTERFACE, verbose=0)
 
-    def check_sae_Exchange(self):
+    def check_sae_exchange(self):
+        """check_sae_exchange"""
         print(bcolors.OKGREEN + "\n\nPerforming a SAE exchange: " + bcolors.ENDC)
         frame = infos.generate_Custom_Commit(3, 1, 0)
         for i in range(1, 6):
@@ -895,10 +900,10 @@ class neccessary_Tests:
         )
         print("Searching...")
         scapy.all.sniff(
-            iface=infos.ATTACKING_INTERFACE, stop_filter=self.stopfilter, store=0
+            iface=infos.ATTACKING_INTERFACE, stop_filter=self.stop_filter, store=0
         )
 
-    def stopfilter(self, pkt):
+    def stop_filter(self, pkt):
         """Stop Filter"""
         if pkt.haslayer(scapy.layers.dot11.Dot11):
             scapy.layers.dot11.Dot11_layer = pkt.getlayer(scapy.layers.dot11.Dot11)
@@ -1003,7 +1008,7 @@ state = save_State()
 
 fuzz = fuzz()
 
-neccessary_Tests = neccessary_Tests()
+neccessary_tests = neccessary_tests()
 
 global start
 start = 0
@@ -1024,14 +1029,14 @@ else:
     thread1.start()
 
 
-global stop_ALL_threads
-stop_ALL_threads = 0
+global stop_all_threads
+stop_all_threads = 0
 
 while True:
     if start == 1:
-        fuzz.initiate_Fuzzing_LOGICAL_MODE()
-        graphs.statisticss(nonresponsive_Path, state.order_Values)
-        stop_ALL_threads = 1
+        fuzz.initiate_fuzzing_logical_mode()
+        graphs.statisticss(nonresponsive_Path, state.order_values)
+        stop_all_threads = 1
 
         # fuzz.initiate_Fuzzing_EXTENDED_MODE()
         print("\n\nFUZZING FINISHED!")

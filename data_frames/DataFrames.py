@@ -1,29 +1,31 @@
 """Data Frames"""
 import subprocess
+import time
 from threading import Thread
-from time import sleep
 
 import scapy.all
 import scapy.layers.dot11
 
 import settings
-from generateBytes import generate_bytes
+from generate_bytes import generate_bytes
 from Logging import LogFiles
-from Msgs_colors import bcolors
+from message_colors import bcolors
 
 NUM_OF_FRAMES_TO_SEND = 64
 
 
 class DataFrames:
+    """DataFrames"""
+
     def __init__(
-        self, dest_addr, source_addr, interface, mode, frame_id, is_STA_the_target
+        self, dest_addr, source_addr, interface, mode, frame_id, is_sta_the_target
     ):
         self.dest_addr = dest_addr
         self.source_addr = source_addr
         self.interface = interface
         self.mode = mode
         self.frame_id = frame_id
-        self.is_STA_the_target = is_STA_the_target
+        self.is_sta_the_target = is_sta_the_target
         self.rotating_sym = Thread(target=self.rotating_symbol)
         self.data_subtypes = [
             {
@@ -123,13 +125,14 @@ class DataFrames:
                 "standard_payload": b"\x04\x00\x74\x49\xff\x11",
             },
         ]
+
         self.fuzzer_state = {
             "Frame Control Flags": {
-                "send_function": self.generate_frame_with_random_FCf,
+                "send_function": self.generate_frame_with_random_fcf,
                 "conn_loss": False,
             },
             "Sequence number": {
-                "send_function": self.generate_frame_with_random_SC,
+                "send_function": self.generate_frame_with_random_sc,
                 "conn_loss": False,
             },
             "payload": {
@@ -137,15 +140,17 @@ class DataFrames:
                 "conn_loss": False,
             },
             "Frame Control Flags + Sequence number + payload": {
-                "send_function": self.generate_frame_with_random_FCf_SC_and_payload,
+                "send_function": self.generate_frame_with_random_fcf_sc_and_payload,
                 "conn_loss": False,
             },
         }
 
     def rotating_symbol(self):
+        """rotating_symbol"""
         subprocess.call(["./Data_frames/rot.sh"])
 
     def extract_frame_info(self):
+        """extract_frame_info"""
         for frame_type in self.data_subtypes:
             if self.frame_id - 1 == frame_type["frame_id"]:
                 return frame_type
@@ -154,10 +159,12 @@ class DataFrames:
         payload = bytearray(b"")
         for item in generate_bytes(num_of_bytes, self.mode):
             payload.append(item)
+
         return bytes(payload)
 
-    def generate_MAC_header(self, FCf=11, seq_num=int.from_bytes(b"\x00\x00", "big")):
-        if self.is_STA_the_target:
+    def generate_mac_header(self, FCf=11, seq_num=int.from_bytes(b"\x00\x00", "big")):
+        """generate_mac_header"""
+        if self.is_sta_the_target:
             dot11 = scapy.layers.dot11.Dot11(
                 type=2,
                 subtype=self.frame_id - 1,
@@ -179,48 +186,56 @@ class DataFrames:
                 SC=seq_num,
                 addr4=self.source_addr,
             )
-        MAC_header = scapy.layers.dot11.RadioTap() / dot11
-        return MAC_header
+        mac_header = scapy.layers.dot11.RadioTap() / dot11
+        return mac_header
 
     def generate_random_payload(self):
+        """generate_random_payload"""
         frame_info = self.extract_frame_info()
         if frame_info["payload_size"] == 0:
             return b""
-        else:
-            return self.construct_bytes(frame_info["payload_size"])
 
-    def generate_frame_with_random_SC(self):
+        return self.construct_bytes(frame_info["payload_size"])
+
+    def generate_frame_with_random_sc(self):
+        """generate_frame_with_random_sc"""
         frame_info = self.extract_frame_info()
         while True:
             SC = int.from_bytes(self.construct_bytes(2), "big")
             if SC < 65535:
-                return self.generate_MAC_header(0, SC) / frame_info["standard_payload"]
+                return self.generate_mac_header(0, SC) / frame_info["standard_payload"]
 
-    def generate_frame_with_random_FCf(self):
+    def generate_frame_with_random_fcf(self):
+        """generate_frame_with_random_fcf"""
         frame_info = self.extract_frame_info()
         return (
-            self.generate_MAC_header(int.from_bytes(self.construct_bytes(1), "big"))
+            self.generate_mac_header(int.from_bytes(self.construct_bytes(1), "big"))
             / frame_info["standard_payload"]
         )
 
     def generate_frame_with_random_payload(self, FCf=11):
-        MAC_header = self.generate_MAC_header(FCf)
+        """generate_frame_with_random_payload"""
+        mac_header = self.generate_mac_header(FCf)
         payload = self.generate_random_payload()
-        return MAC_header / payload
+        return mac_header / payload
 
-    def generate_frame_with_random_FCf_SC_and_payload(self):
+    def generate_frame_with_random_fcf_sc_and_payload(self):
+        """generate_frame_with_random_fcf_sc_and_payload"""
         while True:
             SC = int.from_bytes(self.construct_bytes(2), "big")
             if SC < 65535:
-                MAC_header = self.generate_MAC_header(
+                MAC_header = self.generate_mac_header(
                     int.from_bytes(self.construct_bytes(1), "big"), SC
                 )
                 payload = self.generate_random_payload()
                 return MAC_header / payload
 
     def check_conn_aliveness(self, frame, fuzzing_stage):
+        """check_conn_aliveness"""
+
         def check_conn():
-            sleep(2)
+            """check_conn"""
+            time.sleep(2)
             while settings.conn_loss or not settings.is_alive:
                 pass
             return
@@ -241,14 +256,16 @@ class DataFrames:
             print(
                 f"{bcolors.OKCYAN}Pausing for 20'' and proceeding to the next subtype of frames{bcolors.ENDC}\n"
             )
-            sleep(20)
+            time.sleep(20)
             settings.is_alive = True
             settings.conn_loss = False
             check_conn()
             return True
+
         return False
 
     def fuzz_data_frames(self):
+        """fuzz_data_frames"""
         frames_till_disr = []
         counter = 1
         init_logs = LogFiles()

@@ -3,14 +3,14 @@ import subprocess
 
 
 def generate_bytes(num_of_bytes, mode):
+    """generate_bytes"""
     current_dir = os.getcwd()
     right_length = False
     if mode == "standard":
         while not right_length:
             console_data = subprocess.Popen(
                 [
-                    f"""{current_dir}/blab -e 'output = octet octet = half_octet half_octet half_octet = [0-9] | [
-A-F]' -n {num_of_bytes} """
+                    f"""{current_dir}/blab -e 'output = octet octet = half_octet half_octet half_octet = [0-9] | [A-F]' -n {num_of_bytes} """
                 ],
                 stdout=subprocess.PIPE,
                 shell=True,
@@ -47,4 +47,5 @@ A-F]' -n {num_of_bytes} """
             ]
             if len(bytes) < 64:
                 right_length = True
+
     return bytes

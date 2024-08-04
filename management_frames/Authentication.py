@@ -1,9 +1,12 @@
-from scapy.all import Dot11Auth, Dot11Elt, hexdump
+"""Authentication"""
+import subprocess
+from random import randint
 
-import settings
+import scapy.layers.dot11
+
 from Logging import LogFiles
-from Mngmt_frames.Construct_frame_fields import *
-from Msgs_colors import bcolors
+from management_frames.Construct_frame_fields import NUM_OF_FRAMES_TO_SEND, Frame
+from message_colors import bcolors
 
 
 class Authentication(Frame):
@@ -42,14 +45,16 @@ class Authentication(Frame):
         }
 
     def send_empty_auth(self, mode):
-        return self.construct_MAC_header(
+        """send_empty_auth"""
+        return self.construct_mac_header(
             11, self.dest_addr, self.source_addr, self.dest_addr
         )
 
     def send_auth_with_rand_algo(self, mode):
-        auth = Dot11Auth(algo=randint(1, 9999), seqnum=1, status=0)
+        """send_auth_with_rand_algo"""
+        auth = scapy.layers.dot11.Dot11Auth(algo=randint(1, 9999), seqnum=1, status=0)
         frame = (
-            self.construct_MAC_header(
+            self.construct_mac_header(
                 11, self.dest_addr, self.source_addr, self.dest_addr
             )
             / auth
@@ -57,9 +62,10 @@ class Authentication(Frame):
         return frame
 
     def send_auth_with_rand_seqnum(self, mode):
-        auth = Dot11Auth(algo=0, seqnum=randint(1, 9999), status=0)
+        """send_auth_with_rand_seqnum"""
+        auth = scapy.layers.dot11.Dot11Auth(algo=0, seqnum=randint(1, 9999), status=0)
         frame = (
-            self.construct_MAC_header(
+            self.construct_mac_header(
                 11, self.dest_addr, self.source_addr, self.dest_addr
             )
             / auth
@@ -67,9 +73,10 @@ class Authentication(Frame):
         return frame
 
     def send_auth_with_rand_status(self, mode):
-        auth = Dot11Auth(algo=0, seqnum=1, status=randint(1, 65535))
+        """send_auth_with_rand_status"""
+        auth = scapy.layers.dot11.Dot11Auth(algo=0, seqnum=1, status=randint(1, 65535))
         frame = (
-            self.construct_MAC_header(
+            self.construct_mac_header(
                 11, self.dest_addr, self.source_addr, self.dest_addr
             )
             / auth
@@ -77,11 +84,12 @@ class Authentication(Frame):
         return frame
 
     def send_auth_with_all_fields_rand(self, mode):
-        auth = Dot11Auth(
+        """send_auth_with_all_fields_rand"""
+        auth = scapy.layers.dot11.Dot11Auth(
             algo=randint(1, 9999), seqnum=randint(1, 9999), status=randint(1, 65535)
         )
         frame = (
-            self.construct_MAC_header(
+            self.construct_mac_header(
                 11, self.dest_addr, self.source_addr, self.dest_addr
             )
             / auth
@@ -89,6 +97,7 @@ class Authentication(Frame):
         return frame
 
     def fuzz_for_allowed_values(self, caused_disc):
+        """fuzz_for_allowed_values"""
         init_logs = LogFiles()
 
         def is_payload_reused(conn_loss_vals):
@@ -106,16 +115,18 @@ class Authentication(Frame):
                         subprocess.call(
                             [
                                 "echo"
-                                + f" Transmiting {bcolors.OKBLUE}authentication{bcolors.ENDC} frames with"
+                                f" Transmiting {bcolors.OKBLUE}authentication{bcolors.ENDC} frames with"
                                 f" authentication algorithm number {algo}, sequence number {seq} and"
                                 f" status {status}"
                             ],
                             shell=True,
                         )
                         for _ in range(1, NUM_OF_FRAMES_TO_SEND):
-                            auth = Dot11Auth(algo=algo, seqnum=seq, status=status)
+                            auth = scapy.layers.dot11.Dot11Auth(
+                                algo=algo, seqnum=seq, status=status
+                            )
                             frame = (
-                                self.construct_MAC_header(
+                                self.construct_mac_header(
                                     11, self.dest_addr, self.source_addr, self.dest_addr
                                 )
                                 / auth
@@ -123,12 +134,16 @@ class Authentication(Frame):
                             if self.check_conn_aliveness(frame):
                                 caused_disc.append((algo, seq, status))
                                 init_logs.logging_conn_loss(
-                                    f"onnectivity issues detected while sending {self.frame_name} frames with authentication algorithm: {algo}, sequence number: {seq} and status: {status}\nframe = {frame}\n\n",
+                                    f"Connectivity issues detected while sending {self.frame_name} "
+                                    f"frames with authentication algorithm: {algo}, "
+                                    f"sequence number: {seq} and status: {status}\n"
+                                    f"frame = {frame}\n\n",
                                     init_logs.is_alive_path_mngmt,
                                 )
                             else:
-                                self.send_Frame(frame, self.interface)
+                                self.send_frame(frame, self.interface)
         return caused_disc
 
     def fuzz_auth(self):
+        """fuzz_auth"""
         self.fuzz(self.mode, self.fuzzer_state, self.interface, True)

@@ -88,12 +88,12 @@ class graphss:
         if len(string_of_Output) > 3:
             alllines = string_of_Output.split("\n")
             print("\n\n" + "-" * 40 + name + "-" * 40)
-            for listt in listofLists:
+            for list_item in listofLists:
                 counter = 0
                 average = 0
-                auth = listt[0]
-                seq = listt[1]
-                status = listt[2]
+                auth = list_item[0]
+                seq = list_item[1]
+                status = list_item[2]
 
                 for line in alllines:
                     if (" " + str(auth) + " " + str(seq) + " " + str(status)) in line:

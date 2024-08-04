@@ -1,16 +1,16 @@
 """Control Frames"""
 import binascii
 import subprocess
+import time
 from threading import Thread
-from time import sleep
 
 import scapy.all
 import scapy.layers.dot11
 
 import settings
-from generateBytes import generate_bytes
+from generate_bytes import generate_bytes
 from Logging import LogFiles
-from Msgs_colors import bcolors
+from message_colors import bcolors
 
 NUM_OF_FRAMES_TO_SEND = 64
 
@@ -152,9 +152,10 @@ class ControlFrames:
                 "standard_payload": b"",
             },
         ]
+
         self.fuzzer_state = {
             "Frame Control Flags": {
-                "send_function": self.generate_frame_with_random_FCf,
+                "send_function": self.generate_frame_with_random_fcf,
                 "conn_loss": False,
             },
             "payload": {
@@ -162,15 +163,17 @@ class ControlFrames:
                 "conn_loss": False,
             },
             "Frame Control Flags + payload": {
-                "send_function": self.generate_frame_with_random_FCf_and_payload,
+                "send_function": self.generate_frame_with_random_fcf_and_payload,
                 "conn_loss": False,
             },
         }
 
     def rotating_symbol(self):
+        """rotating_symbol"""
         subprocess.call(["./Ctrl_frames/rot.sh"])
 
     def extract_frame_info(self):
+        """extract_frame_info"""
         for frame_type in self.ctrl_subtypes:
             if self.frame_id + 3 == frame_type["frame_id"]:
                 if frame_type["frame_id"] == 6:
@@ -180,12 +183,14 @@ class ControlFrames:
                     return frame_type
 
     def construct_bytes(self, num_of_bytes):
+        """construct_bytes"""
         payload = bytearray(b"")
         for item in generate_bytes(num_of_bytes, self.mode):
             payload.append(item)
         return bytes(payload)
 
-    def generate_MAC_header(self, FCf=0):
+    def generate_mac_header(self, FCf=0):
+        """generate_mac_header"""
         dot11 = scapy.layers.dot11.Dot11(
             type=1,
             subtype=self.frame_id + 3,
@@ -197,6 +202,7 @@ class ControlFrames:
         return MAC_header
 
     def generate_random_payload(self):
+        """generate_random_payload"""
         frame_info = self.extract_frame_info()
         if self.mode == "standard":
             if frame_info["payload_size"] != 0:
@@ -208,47 +214,52 @@ class ControlFrames:
                             return binascii.unhexlify(
                                 self.source_addr.replace(":", "")
                             ) + self.construct_bytes(frame_info["payload_size"])
-                    else:
-                        return binascii.unhexlify(
-                            self.source_addr.replace(":", "")
-                        ) + self.construct_bytes(frame_info["payload_size"])
+
+                    return binascii.unhexlify(
+                        self.source_addr.replace(":", "")
+                    ) + self.construct_bytes(frame_info["payload_size"])
                 else:
                     return self.construct_bytes(frame_info["payload_size"])
-            else:
-                if self.frame_id + 3 in {4, 5, 6}:
-                    return binascii.unhexlify(self.source_addr.replace(":", ""))
-                else:
-                    return b""
+            if self.frame_id + 3 in {4, 5, 6}:
+                return binascii.unhexlify(self.source_addr.replace(":", ""))
+
+            return b""
         elif self.mode == "random":
             if self.frame_id + 3 in {4, 5, 6}:
                 return binascii.unhexlify(
                     self.source_addr.replace(":", "")
                 ) + self.construct_bytes(frame_info["payload_size"])
-            else:
-                return self.construct_bytes(frame_info["payload_size"])
 
-    def generate_frame_with_random_FCf(self):
+            return self.construct_bytes(frame_info["payload_size"])
+
+    def generate_frame_with_random_fcf(self):
+        """generate_frame_with_random_fcf"""
         frame_info = self.extract_frame_info()
         return (
-            self.generate_MAC_header(int.from_bytes(self.construct_bytes(1), "big"))
+            self.generate_mac_header(int.from_bytes(self.construct_bytes(1), "big"))
             / frame_info["standard_payload"]
         )
 
     def generate_frame_with_random_payload(self, FCf=0):
-        MAC_header = self.generate_MAC_header(FCf)
+        """generate_frame_with_random_payload"""
+        MAC_header = self.generate_mac_header(FCf)
         payload = self.generate_random_payload()
         return MAC_header / payload
 
-    def generate_frame_with_random_FCf_and_payload(self):
-        MAC_header = self.generate_MAC_header(
+    def generate_frame_with_random_fcf_and_payload(self):
+        """generate_frame_with_random_fcf_and_payload"""
+        MAC_header = self.generate_mac_header(
             int.from_bytes(self.construct_bytes(1), "big")
         )
         payload = self.generate_random_payload()
         return MAC_header / payload
 
     def check_conn_aliveness(self, frame, fuzzing_stage):
+        """check_conn_aliveness"""
+
         def check_conn():
-            sleep(2)
+            """check_conn"""
+            time.sleep(2)
             while settings.conn_loss or not settings.is_alive:
                 pass
             return
@@ -264,19 +275,22 @@ class ControlFrames:
             print("\nHexDump of frame:")
             scapy.all.hexdump(frame)
             input(
-                f"\n{bcolors.FAIL}Deauth or Disass frame found.{bcolors.ENDC}\n\n{bcolors.WARNING}Reconnect, if needed, and press Enter to resume:{bcolors.ENDC}\n"
+                f"\n{bcolors.FAIL}Deauth or Disass frame found.{bcolors.ENDC}\n\n"
+                f"{bcolors.WARNING}Reconnect, if needed, and press Enter to resume:{bcolors.ENDC}\n"
             )
             print(
                 f"{bcolors.OKCYAN}Pausing for 20'' and proceeding to the next subtype of frames{bcolors.ENDC}\n"
             )
-            sleep(20)
+            time.sleep(20)
             settings.is_alive = True
             settings.conn_loss = False
             check_conn()
             return True
+
         return False
 
     def fuzz_ctrl_frames(self):
+        """fuzz_ctrl_frames"""
         frames_till_disr = []
         counter = 1
         init_logs = LogFiles()
@@ -288,7 +302,7 @@ class ControlFrames:
             print("You selected mode:", self.mode)
             while True:
                 frames_till_disr = []
-                subprocess.call(["echo" + f" Fuzzing cycle No.{counter}\n"], shell=True)
+                subprocess.call([f"echo Fuzzing cycle No.{counter}\n"], shell=True)
                 subprocess.call(
                     [
                         "echo"
@@ -303,6 +317,7 @@ class ControlFrames:
                 for i in self.fuzzer_state:
                     if self.fuzzer_state[i]["conn_loss"] == True:
                         continue
+
                     if frame_info["frame_id"] == 6:
                         subprocess.call(["clear"], shell=True)
                         print(

@@ -1,13 +1,13 @@
 """Construct Frame Fields"""
 import subprocess
-from time import sleep
+import time
 
 import scapy.layers.dot11
 
 import settings
-from generateBytes import generate_bytes
+from generate_bytes import generate_bytes
 from Logging import LogFiles
-from Msgs_colors import bcolors
+from message_colors import bcolors
 
 NUM_OF_FRAMES_TO_SEND = 64
 
@@ -63,13 +63,14 @@ STANDARD_MAC_ADDRESS = "00:14:78:53:01:d8"
 
 
 class Frame:
-    def construct_MAC_header(self, subtype, mac_to, mac_from, ap_mac):
+    def construct_mac_header(self, subtype, mac_to, mac_from, ap_mac):
         dot11 = scapy.layers.dot11.Dot11(
             type=0, subtype=subtype, addr1=mac_to, addr2=mac_from, addr3=ap_mac
         )
         return scapy.layers.dot11.RadioTap() / dot11
 
-    def construct_RSN(self, mode):
+    def construct_rsn(self, mode):
+        """construct_rsn"""
         # 03 and 14-15 are reserved for PKCS
         # 00 and 14-15 are reserved for AKMS
         rsn_array = [
@@ -94,13 +95,15 @@ class Frame:
             ID="RSNinfo", info=rsn_bytes, len=len(rsn_bytes)
         )
 
-    def construct_TIM(self, mode):
+    def construct_tim(self, mode):
+        """construct_tim"""
         tim_bytes = bytearray(b"")
         for item in generate_bytes(6, mode):
             tim_bytes.append(item)
         return scapy.layers.dot11.Dot11Elt(ID="TIM", info=tim_bytes)
 
-    def generate_MAC(self):
+    def generate_mac(self):
+        """generate_mac"""
         mac_bytes = generate_bytes(6, "standard")
         return "%02x:%02x:%02x:%02x:%02x:%02x" % (
             mac_bytes[0],
@@ -111,13 +114,14 @@ class Frame:
             mac_bytes[5],
         )
 
-    def generate_SSID(self, mode):
+    def generate_ssid(self, mode):
         ssid = bytearray(b"")
         for item in generate_bytes(16, mode):
             ssid.append(item)
         return scapy.layers.dot11.Dot11Elt(ID="SSID", info=ssid, len=len(ssid))
 
     def generate_supp_speed(self, mode):
+        """generate_supp_speed"""
         # the standard speed rates is \x82\x84\x8b\x0c\x12\x96\x18\x24,
         # the fields consists of 8 octets
         supported_rates = bytearray(b"")
@@ -137,6 +141,7 @@ class Frame:
         return rates
 
     def generate_channel_use(self, mode):
+        """generate_channel_use"""
         # 2.412 to 2.472 --> channels 1-13 and 14 is Channel Center Frequency
         # 5.170 to 5.825 --> 4 sub bands (U-NII bands) in use
         # U-NII-1 most used band --> channels 34-48 incr by 2 (freqs. 5170–5240)
@@ -151,54 +156,65 @@ class Frame:
             channel.append(item)
         return scapy.layers.dot11.Dot11Elt(ID="DSset", info=channel, len=len(channel))
 
-    def generate_HT_capabilities(self, mode):
+    def generate_ht_capabilities(self, mode):
+        """generate_ht_capabilities"""
         ht_cap = bytearray(b"")
         for item in generate_bytes(26, mode):
             ht_cap.append(item)
         return scapy.layers.dot11.Dot11Elt(ID=45, info=ht_cap, len=len(ht_cap))
 
-    def generate_extended_HT_capabilities(self, mode):
+    def generate_extended_ht_capabilities(self, mode):
+        """generate_extended_ht_capabilities"""
         ext_ht_cap = bytearray(b"")
         for item in generate_bytes(8, mode):
             ext_ht_cap.append(item)
         return scapy.layers.dot11.Dot11Elt(ID=127, info=ext_ht_cap, len=len(ext_ht_cap))
 
     def generate_power_capability(self, mode):
+        """generate_power_capability"""
         power_cap = bytearray(b"")
         for item in generate_bytes(2, mode):
             power_cap.append(item)
         return scapy.layers.dot11.Dot11Elt(ID=33, info=power_cap, len=len(power_cap))
 
     def generate_supported_channels(self, mode):
+        """generate_supported_channels"""
         supp_ch = bytearray(b"")
         for item in generate_bytes(2, mode):
             supp_ch.append(item)
         return scapy.layers.dot11.Dot11Elt(ID=36, info=supp_ch, len=len(supp_ch))
 
-    def generate_overlapping_BSS(self, mode):
+    def generate_overlapping_bss(self, mode):
+        """generate_overlapping_bss"""
         overl_bss = bytearray(b"")
         for item in generate_bytes(14, mode):
             overl_bss.append(item)
         return scapy.layers.dot11.Dot11Elt(ID=74, info=overl_bss, len=len(overl_bss))
 
-    def generate_HT_information(self, mode):
+    def generate_ht_information(self, mode):
+        """generate_ht_information"""
         ht_info = bytearray(b"")
         for item in generate_bytes(22, mode):
             ht_info.append(item)
         return scapy.layers.dot11.Dot11Elt(ID=61, info=ht_info, len=len(ht_info))
 
-    def generate_RM_enabled_capabilities(self, mode):
+    def generate_rm_enabled_capabilities(self, mode):
+        """generate_rm_enabled_capabilities"""
         rm_caps = bytearray(b"")
         for item in generate_bytes(5, mode):
             rm_caps.append(item)
         return scapy.layers.dot11.Dot11Elt(ID=70, info=rm_caps, len=len(rm_caps))
 
-    def send_Frame(self, frame, interface):
+    def send_frame(self, frame, interface):
+        """send_frame"""
         scapy.all.sendp(frame, count=2, iface=interface, verbose=0)
 
     def check_conn_aliveness(self, frame, fuzzing_stage=0):
+        """check_conn_aliveness"""
+
         def check_conn():
-            sleep(2)
+            """check_conn"""
+            time.sleep(2)
             while settings.conn_loss or not settings.is_alive:
                 pass
             return
@@ -212,7 +228,8 @@ class Frame:
             scapy.all.hexdump(frame)
             check_conn()
             return True
-        elif settings.conn_loss:
+
+        if settings.conn_loss:
             if fuzzing_stage == 0:
                 pass
             else:
@@ -220,56 +237,58 @@ class Frame:
             print("\nHexDump of frame:")
             scapy.all.hexdump(frame)
             input(
-                f"\n{bcolors.FAIL}Deauth or Disass frame found.{bcolors.ENDC}\n\n{bcolors.WARNING}Reconnect, if needed, and press Enter to resume:{bcolors.ENDC}\n"
+                f"\n{bcolors.FAIL}Deauth or Disass frame found.{bcolors.ENDC}\n\n"
+                f"{bcolors.WARNING}Reconnect, if needed, and press Enter to resume:{bcolors.ENDC}\n"
             )
             print(
                 f"{bcolors.OKCYAN}Pausing for 20'' and proceeding to the next subtype of frames{bcolors.ENDC}\n"
             )
-            sleep(20)
+            time.sleep(20)
             settings.is_alive = True
             settings.conn_loss = False
             check_conn()
             return True
+
         return False
 
     def fuzz(self, mode, list_of_fields, interface, is_auth_frame=False):
+        """fuzz"""
         init_logs = LogFiles()
         counter = 1
         frames_till_disr = []
         caused_disc = [(999, 999, 999)]
         if mode == "standard" or mode == "random":
             subprocess.call(["clear"], shell=True)
-            print(
-                "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - "
-            )
+            print(("- " * 37))
             print("You selected mode:", mode)
             while True:
                 frames_till_disr = []
                 subprocess.call(["echo" + f" Fuzzing cycle No.{counter}\n"], shell=True)
                 subprocess.call(
                     [
-                        "echo"
-                        + f" {bcolors.OKGREEN}Stop the fuzzing and monitoring processes with 2 consecutive Ctrl+c{bcolors.ENDC}\n"
+                        f"echo {bcolors.OKGREEN}Stop the fuzzing and monitoring processes with 2 "
+                        f"consecutive Ctrl+c{bcolors.ENDC}\n"
                     ],
                     shell=True,
                 )
-                print(
-                    "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n\n"
-                )
+                print(("- " * 37) + "\n\n")
+
                 for i in list_of_fields:
                     if list_of_fields[i]["conn_loss"] == True:
                         continue
                     if is_auth_frame and mode == "standard":
                         caused_disc = self.fuzz_for_allowed_values(caused_disc)
                         break
+
                     if i == "empty":
                         subprocess.call(
                             [
-                                "echo"
-                                + f" Transmitting {2*NUM_OF_FRAMES_TO_SEND} {i} {bcolors.OKBLUE}{self.frame_name}{bcolors.ENDC} frames"
+                                f"echo Transmitting {2*NUM_OF_FRAMES_TO_SEND} {i} {bcolors.OKBLUE}"
+                                f"{self.frame_name}{bcolors.ENDC} frames"
                             ],
                             shell=True,
                         )
+
                         for _ in range(1, NUM_OF_FRAMES_TO_SEND):
                             frame = list_of_fields[i]["send_function"](mode)
                             frames_till_disr += frame
@@ -294,7 +313,7 @@ class Frame:
                                 frames_till_disr = []
                                 break
                             else:
-                                self.send_Frame(frame, interface)
+                                self.send_frame(frame, interface)
                     elif (
                         i == "addresses reversed '(destination = AP, source = STA)'"
                         and mode == "standard"
@@ -305,8 +324,8 @@ class Frame:
                     else:
                         subprocess.call(
                             [
-                                "echo"
-                                + f" Transmitting {2*NUM_OF_FRAMES_TO_SEND} {bcolors.OKBLUE}{self.frame_name}{bcolors.ENDC} frames with random {i}"
+                                f"echo Transmitting {2*NUM_OF_FRAMES_TO_SEND} {bcolors.OKBLUE}"
+                                f"{self.frame_name}{bcolors.ENDC} frames with random {i}"
                             ],
                             shell=True,
                         )
@@ -334,6 +353,7 @@ class Frame:
                                 frames_till_disr = []
                                 break
                             else:
-                                self.send_Frame(frame, interface)
+                                self.send_frame(frame, interface)
+
                 subprocess.call(["clear"], shell=True)
                 counter += 1

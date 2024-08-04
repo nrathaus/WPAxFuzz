@@ -1,62 +1,62 @@
-"""Aliveness Check"""
+"""aliveness_check Check"""
 import subprocess
 import sys
 import threading
-from time import sleep
+import time
 
 import settings
-from Msgs_colors import bcolors
+from message_colors import bcolors
 
 
 class AllvCheck(threading.Thread):
-    def __init__(self, targeted_STA, mode):
+    def __init__(self, targeted_sta, mode):
         super(AllvCheck, self).__init__()
-        self.targeted_STA = targeted_STA
+        self.targeted_sta = targeted_sta
         self.mode = mode
 
     def run(self):
         """Run"""
-        ip_prefix = self.find_LAN_prefix()
-        targeted_sta_IP = self.find_IP_of_STA(ip_prefix)
+        ip_prefix = self.find_lan_prefix()
+        targeted_sta_IP = self.find_ip_address_of_sta(ip_prefix)
         if self.mode == "fuzzing":
             while True:
-                sleep(1)
-                ping_Response = self.pingg(targeted_sta_IP)
-                if ping_Response == "found":
+                time.sleep(1)
+                ping_response = self.ping_target(targeted_sta_IP)
+                if ping_response == "found":
                     pass
-                elif ping_Response == "notfound":
+                elif ping_response == "notfound":
                     settings.is_alive = False
                     print(f"\n{bcolors.FAIL}STA is unresponsive{bcolors.ENDC}\n")
                     while True:
                         input(
-                            bcolors.WARNING
-                            + "Reconnect the STA and press Enter to resume:\n"
-                            + bcolors.ENDC
+                            f"{bcolors.WARNING}Reconnect the STA and press Enter to resume:\n"
+                            f"{bcolors.ENDC}"
                         )
-                        if self.pingg(targeted_sta_IP) == "found":
+                        if self.ping_target(targeted_sta_IP) == "found":
                             print(
-                                f"{bcolors.OKCYAN}Pausing for 20s and proceeding to the next subtype of frames{bcolors.ENDC}\n"
+                                f"{bcolors.OKCYAN}Pausing for 20s and proceeding to the "
+                                f"next subtype of frames{bcolors.ENDC}\n"
                             )
-                            sleep(20)
+                            time.sleep(20)
                             settings.is_alive = True
                             settings.conn_loss = False
                             break
         elif self.mode == "attacking":
             while True:
-                sleep(1)
-                ping_Response = self.pingg(targeted_sta_IP)
-                if ping_Response == "found":
+                time.sleep(1)
+                ping_response = self.ping_target(targeted_sta_IP)
+                if ping_response == "found":
                     pass
-                elif ping_Response == "notfound":
+                elif ping_response == "notfound":
                     settings.is_alive = False
 
-    def pingg(self, sta_Ip):
-        """pingg"""
+    def ping_target(self, sta_ip_address):
+        """ping_target"""
         try:
             sa = subprocess.check_output(
                 [
                     "ping -f -c 1 -W 1 "
-                    + sta_Ip
+                    + sta_ip_address
                     + " > /dev/null && echo found || echo notfound"
                 ],
                 shell=True,
@@ -67,39 +67,34 @@ class AllvCheck(threading.Thread):
             print(f"An exception has occured: {e}")
             return "1"
 
-    def find_LAN_prefix(self):
+    def find_lan_prefix(self):
         """find LAN prefix"""
         while True:
             print(
-                "\n\n"
-                + bcolors.OKGREEN
-                + "----Retrieving your IP address----"
-                + bcolors.ENDC
+                f"\n\n{bcolors.OKGREEN}----Retrieving your IP address----{bcolors.ENDC}"
             )
             ip_prefix = subprocess.check_output(
                 ['hostname -I | cut -d "." -f 1,2,3 '], shell=True
             )
             ip_prefix = ip_prefix[:-1].decode("utf-8")
+
             if len(ip_prefix) > 5:
                 print("\nFound IP prefix: " + ip_prefix + " ")
                 return ip_prefix
-            else:
-                print("Could not retrieve your IP address! Retrying in 3s.")
-                sleep(3)
 
-    def find_IP_of_STA(self, ip_prefix):
+            print("Could not retrieve your IP address! Retrying in 3s.")
+            time.sleep(3)
+
+    def find_ip_address_of_sta(self, ip_prefix):
         temp = ip_prefix
         print(
-            "\n\n"
-            + bcolors.OKGREEN
-            + "----Pinging all hosts with an IP prefix of: "
-            + ip_prefix
-            + ".xx----"
-            + bcolors.ENDC
+            f"\n\n{bcolors.OKGREEN}----Pinging all hosts with an IP prefix of: "
+            f"{ip_prefix}.xx----{bcolors.ENDC}"
         )
+
         found = False
         while not found:
-            sleep(0.5)
+            time.sleep(0.5)
             for i in range(1, 254):
                 ip_prefix += "." + str(i)
                 try:
@@ -112,37 +107,34 @@ class AllvCheck(threading.Thread):
 
                 ip_prefix = temp
                 try:
-                    sta_Ip = subprocess.check_output(
+                    sta_ip_address = subprocess.check_output(
                         [
                             "arp -a | grep "
-                            + self.targeted_STA
+                            + self.targeted_sta
                             + ' | tr -d "()" | cut -d " " -f2'
                         ],
                         shell=True,
                     )
-                    sta_Ip = sta_Ip[:-1].decode("utf-8")
+                    sta_ip_address = sta_ip_address[:-1].decode("utf-8")
                 except Exception as e:
                     print("arp -a exception.")
-                    sta_Ip = "1"
+                    sta_ip_address = "1"
 
-                if len(sta_Ip) > 5:
+                if len(sta_ip_address) > 5:
                     print(
-                        "\nRetrieved IP of MAC: "
-                        + self.targeted_STA
-                        + "   is   "
-                        + sta_Ip
-                        + "\n"
+                        f"\nRetrieved IP of MAC: {self.targeted_sta}   is   {sta_ip_address}\n"
                     )
                     found = 1
-                    responsive = self.pingg(sta_Ip)
+                    responsive = self.ping_target(sta_ip_address)
+
                     while responsive == "notfound" or responsive == "1":
                         if (
                             responsive == "1"
-                        ):  # look at pingg function, exception has been triggered
+                        ):  # look at ping_target function, exception has been triggered
                             print(
                                 "Sleeping 10s because something went really wrong. Check your WNIC"
                             )
-                            sleep(10)
+                            time.sleep(10)
                         else:
                             print(
                                 "\n"
@@ -155,18 +147,19 @@ class AllvCheck(threading.Thread):
                                 + "Get the STA back online and press enter: "
                                 + bcolors.ENDC
                             )
-                        responsive = self.pingg(sta_Ip)
+                        responsive = self.ping_target(sta_ip_address)
+
                     print("\nSTA is responsive")
-                    settings.retrieving_IP = True
-                    return sta_Ip
-                else:
-                    print(
-                        "\n"
-                        + bcolors.FAIL
-                        + "Could not find the IP of MAC: "
-                        + bcolors.ENDC
-                        + self.targeted_STA
-                    )
-                    settings.IP_not_alive = True
-                    settings.retrieving_IP = True
-                    sys.exit(0)
+                    settings.retrieving_ip_address = True
+                    return sta_ip_address
+
+                print(
+                    "\n"
+                    + bcolors.FAIL
+                    + "Could not find the IP of MAC: "
+                    + bcolors.ENDC
+                    + self.targeted_sta
+                )
+                settings.ip_address_not_alive = True
+                settings.retrieving_ip_address = True
+                sys.exit(0)

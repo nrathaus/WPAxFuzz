@@ -1,8 +1,10 @@
+"""Fuzzer Init"""
 import json
 
-config = json.load(open("src/config.json", "r"))
+with open("src/config.json", "r", encoding="latin1") as file_handle:
+    config = json.load(file_handle)
 
-targeted_AP = config["AP_info"]["AP_MAC_ADDRESS"]
+targeted_access_point = config["AP_info"]["AP_MAC_ADDRESS"]
 att_interface = config["ATT_interface_info"]["ATTACKING_INTERFACE"]
-targeted_STA = config["STA_info"]["TARGETED_STA_MAC_ADDRESS"]
+targeted_sta = config["STA_info"]["TARGETED_STA_MAC_ADDRESS"]
 real_ap_ssid = config["AP_info"]["AP_SSID"]

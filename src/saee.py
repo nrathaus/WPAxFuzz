@@ -1,18 +1,10 @@
 #!/usr/bin/python
-from scapy.all import *
-
-
-import string
-import random
-import subprocess
-from datetime import datetime
 import hashlib
-from binascii import unhexlify
-import time
 import random
-import logging
+from binascii import unhexlify
 from collections import namedtuple
 
+import scapy.layers.dot11
 
 Point = namedtuple("Point", "x y")
 O = "Origin"
@@ -148,6 +140,7 @@ class Peer:
         self.curve = Curve(self.a, self.b, self.p)
 
     def initiate(self, other_mac, k=40):
+        """initiate"""
         self.other_mac = other_mac
         found = 0
         num_valid_points = 0
@@ -184,6 +177,7 @@ class Peer:
             assert self.curve.valid(self.PE)
 
     def commit_exchange(self):
+        """commit_exchange"""
         random.seed()
 
         self.private = random.randrange(1, self.p)
