@@ -3,28 +3,28 @@ import subprocess
 
 class graphss:
     def __init__(self, path):
-        self.txt_Path = path
-        self.Bursty_24g = ""
-        self.noBursty_24g = ""
-        self.Bursty_5g = ""
-        self.noBursty_5g = ""
+        self.txt_path = path
+        self.bursty_24g = ""
+        self.nobursty_24g = ""
+        self.bursty_5g = ""
+        self.nobursty_5g = ""
         self.get_Instances()
-        self.string_to_Search = []
+        self.string_to_search = []
         self.addString()
 
     def get_Instances(self):
         try:
-            self.Bursty_24g = subprocess.check_output(
-                ["cat " + self.txt_Path + " | grep BURSTY | grep -v 5G"], shell=True
+            self.bursty_24g = subprocess.check_output(
+                ["cat " + self.txt_path + " | grep BURSTY | grep -v 5G"], shell=True
             )
         except Exception:
-            self.Bursty_24g = ""
+            self.bursty_24g = ""
 
         try:
-            self.noBursty_24g = subprocess.check_output(
+            self.nobursty_24g = subprocess.check_output(
                 [
                     "cat "
-                    + self.txt_Path
+                    + self.txt_path
                     + " | grep -v BURSTY | grep -v 5G | grep -v DISCONNECTED"
                 ],
                 shell=True,
@@ -33,25 +33,25 @@ class graphss:
             self.noBursty_24 = ""
 
         try:
-            self.Bursty_5g = subprocess.check_output(
-                ["cat " + self.txt_Path + " | grep BURSTY | grep 5G "],
+            self.bursty_5g = subprocess.check_output(
+                ["cat " + self.txt_path + " | grep BURSTY | grep 5G "],
                 shell=True,
                 stderr=subprocess.STDOUT,
             )
         except Exception:
-            self.Bursty_5g = ""
+            self.bursty_5g = ""
 
         try:
-            self.noBursty_5g = subprocess.check_output(
+            self.nobursty_5g = subprocess.check_output(
                 [
                     "cat "
-                    + self.txt_Path
+                    + self.txt_path
                     + " | grep -v BURSTY | grep 5G | grep -v DISCONNECTED"
                 ],
                 shell=True,
             )
         except Exception:
-            self.noBursty_5g = ""
+            self.nobursty_5g = ""
 
     def average_per_Attackstr(self, name, string_of_Output):
         diferrent_Values = []
@@ -60,7 +60,7 @@ class graphss:
             alllines = string_of_Output.split("\n")
 
             print("\n\n" + "-" * 40 + name + "-" * 40)
-            for strings in self.string_to_Search:
+            for strings in self.string_to_search:
                 counter = 0
                 average = 0
                 for lines in alllines:
@@ -119,30 +119,30 @@ class graphss:
                     )
 
     def addString(self):
-        self.string_to_Search.append("eempty body frames with values")
-        self.string_to_Search.append(
+        self.string_to_search.append("eempty body frames with values")
+        self.string_to_search.append(
             "valid commits folowed by empty body frames with values"
         )
-        self.string_to_Search.append(
+        self.string_to_search.append(
             "valid commits folowed by confirm with send-confirm value = 0"
         )
-        self.string_to_Search.append(
+        self.string_to_search.append(
             "valid commits folowed by confirm with send-confirm value = 2"
         )
-        self.string_to_Search.append("commits with body values")
-        self.string_to_Search.append("confirms with send-confirm value = 0")
-        self.string_to_Search.append("confirms with send-confirm value = 2")
+        self.string_to_search.append("commits with body values")
+        self.string_to_search.append("confirms with send-confirm value = 0")
+        self.string_to_search.append("confirms with send-confirm value = 2")
 
     def go(self, listofValues):
-        self.average_per_Attackstr("2.4g", self.noBursty_24g)
-        self.average_per_Attackstr("2.4g Bursts", self.Bursty_24g)
-        self.average_per_Attackstr("5g ", self.noBursty_5g)
-        self.average_per_Attackstr("5g Bursts", self.Bursty_5g)
+        self.average_per_Attackstr("2.4g", self.nobursty_24g)
+        self.average_per_Attackstr("2.4g Bursts", self.bursty_24g)
+        self.average_per_Attackstr("5g ", self.nobursty_5g)
+        self.average_per_Attackstr("5g Bursts", self.bursty_5g)
 
-        self.average_per_Value("2.4g", self.noBursty_24g, listofValues)
-        self.average_per_Value("2.4g Bursts", self.Bursty_24g, listofValues)
-        self.average_per_Value("5g ", self.noBursty_5g, listofValues)
-        self.average_per_Value("5g Bursts", self.Bursty_5g, listofValues)
+        self.average_per_Value("2.4g", self.nobursty_24g, listofValues)
+        self.average_per_Value("2.4g Bursts", self.bursty_24g, listofValues)
+        self.average_per_Value("5g ", self.nobursty_5g, listofValues)
+        self.average_per_Value("5g Bursts", self.bursty_5g, listofValues)
 
 
 def statisticss(path, listofLists):

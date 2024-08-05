@@ -74,7 +74,7 @@ class deauth_Monitor(threading.Thread):
                 [
                     "echo ",
                     f"{time_found}. Found deauth from {packet[scapy.layers.dot11.Dot11].addr2} "
-                    f"to {packet[scapy.layers.dot11.Dot11].addr1} >> {deauth_Path} during: {state.message}",
+                    f"to {packet[scapy.layers.dot11.Dot11].addr1} >> {deauth_path} during: {state.message}",
                 ],
                 shell=True,
             )
@@ -89,7 +89,7 @@ class deauth_Monitor(threading.Thread):
                 [
                     "echo"
                     f"{time_found}. Found disas from {packet[scapy.layers.dot11.Dot11].addr2} to "
-                    f"{packet[scapy.layers.dot11.Dot11].addr1} >> {deauth_Path} during: {state.message}",
+                    f"{packet[scapy.layers.dot11.Dot11].addr1} >> {deauth_path} during: {state.message}",
                 ],
                 shell=True,
             )
@@ -104,27 +104,27 @@ class Generate_Frames:
 
     def __init__(
         self,
-        AP_MAC,
-        AP_CHANNEL,
-        AP_MAC_DIFFERENT,
-        CHANNEL_DIFFERENT,
-        STA_MAC,
-        ATTACKING_INTERFACE,
-        MONITORING_INTERFACE,
-        PASSWORD,
+        ap_mac,
+        ap_channel,
+        ap_mac_different,
+        channel_different,
+        sta_mac,
+        attacking_interface,
+        monitoring_interface,
+        password,
     ):
-        self.AP_MAC = AP_MAC
-        self.AP_CHANNEL = AP_CHANNEL
-        self.AP_MAC_DIFFERENT = AP_MAC_DIFFERENT
-        self.CHANNEL_DIFFERENT = CHANNEL_DIFFERENT
-        self.STA_MAC = STA_MAC
-        self.ATTACKING_INTERFACE = ATTACKING_INTERFACE
-        self.MONITORING_INTERFACE = MONITORING_INTERFACE
-        self.PASSWORD = PASSWORD
+        self.AP_MAC = ap_mac
+        self.AP_CHANNEL = ap_channel
+        self.AP_MAC_DIFFERENT = ap_mac_different
+        self.CHANNEL_DIFFERENT = channel_different
+        self.STA_MAC = sta_mac
+        self.ATTACKING_INTERFACE = attacking_interface
+        self.MONITORING_INTERFACE = monitoring_interface
+        self.PASSWORD = password
 
-    def generate_Authbody(self, auth_Algorithm, sequence_Number, status1):
+    def generate_authbody(self, auth_Algorithm, sequence_Number, status1):
         """Generate Authbody"""
-        auth_Body = (
+        auth_body = (
             scapy.layers.dot11.RadioTap()
             / scapy.layers.dot11.Dot11(
                 type=0,
@@ -137,64 +137,72 @@ class Generate_Frames:
                 algo=auth_Algorithm, seqnum=sequence_Number, status=status1
             )
         )
-        return auth_Body
+        return auth_body
 
-    def generate_valid_Commit_Authbody(self):
+    def generate_valid_commit_authbody(self):
         """Generate valid Commit Authbody"""
-        auth_Body = self.generate_Authbody(3, 1, 0)
-        return auth_Body
+        auth_body = self.generate_authbody(3, 1, 0)
+        return auth_body
 
-    def generate_valid_Confirm_Authbody(self):
-        auth_Body = self.generate_Authbody(3, 2, 0)
-        return auth_Body
+    def generate_valid_confirm_authbody(self):
+        """generate_valid_confirm_authbody"""
+        auth_body = self.generate_authbody(3, 2, 0)
+        return auth_body
 
-    def generate_Group(self):
+    def generate_group(self):
+        """generate_group"""
         group = "\x13\x00"
         return group
 
-    def generate_send_Confirm(self, valid):
+    def generate_send_confirm(self, valid):
+        """generate_send_confirm"""
         if valid == 0:
             send = "\x00\x00"
         if valid == 1:
             send = "\x00\x02"
         return send
 
-    def generate_payload_Confirm(self):
+    def generate_payload_confirm(self):
+        """generate_payload_confirm"""
         confirm = "something"
         return confirm
 
-    def generate_Custom_Commit(self, auth, seq, stat):
-        body = self.generate_Authbody(auth, seq, stat)
-        group = self.generate_Group()
-        print(infos.STA_MAC.upper() + infos.AP_MAC.upper())
-        scalar, finite = saee.generate_Scalar_Finite(
+    def generate_custom_commit(self, auth, seq, stat):
+        """generate_custom_commit"""
+        body = self.generate_authbody(auth, seq, stat)
+        group = self.generate_group()
+        print(f"{infos.STA_MAC.upper()} -> {infos.AP_MAC.upper()}")
+        scalar, finite = saee.generate_scalar_finite(
             infos.PASSWORD, infos.STA_MAC.upper(), infos.AP_MAC.upper()
         )
         frame = body / group / scalar / finite
         return frame
 
-    def generate_Custom_Confirm(self, auth, seq, stat, valid):
-        body = self.generate_Authbody(auth, seq, stat)
-        send = self.generate_send_Confirm(valid)
-        confirm = self.generate_payload_Confirm()
+    def generate_custom_confirm(self, auth, seq, stat, valid):
+        """generate_custom_confirm"""
+        body = self.generate_authbody(auth, seq, stat)
+        send = self.generate_send_confirm(valid)
+        confirm = self.generate_payload_confirm()
         frame = body / send / confirm
         return frame
 
-    def generate_correct_Commit(self):
-        auth_Body = self.generate_valid_Commit_Authbody()
-        group = self.generate_Group()
-        scalar, finite = saee.generate_Scalar_Finite(
+    def generate_correct_commit(self):
+        """generate_correct_commit"""
+        auth_body = self.generate_valid_commit_authbody()
+        group = self.generate_group()
+        scalar, finite = saee.generate_scalar_finite(
             infos.PASSWORD, infos.STA_MAC, infos.AP_MAC
         )
-        frame = auth_Body / group / scalar / finite
+        frame = auth_body / group / scalar / finite
         return frame
 
     def send_frame(self, frame, burst_number):
+        """send_frame"""
         scapy.all.sendp(
             frame, count=burst_number, iface=self.ATTACKING_INTERFACE, verbose=0
         )
 
-    def change_to_diff_Frequency(self):
+    def change_to_diff_frequency(self):
         """Change to Diff Frequency"""
         temp_Mac = self.AP_MAC
         self.AP_MAC = self.AP_MAC_DIFFERENT
@@ -220,7 +228,7 @@ class Generate_Frames:
             + current_channel
         )
 
-    def toString(self):
+    def to_string(self):
         """To String"""
         print(f"AP_MAC: {self.AP_MAC}")
         print(f"AP_CHANNEL: {self.AP_CHANNEL}")
@@ -231,7 +239,9 @@ class Generate_Frames:
         print(f"MONITORING_INTERFACE: {self.MONITORING_INTERFACE}")
 
 
-class save_State:
+class SaveState:
+    """SaveState"""
+
     def __init__(self):
         self.order_values = []
         self.dc_values = []
@@ -295,7 +305,9 @@ class save_State:
                 self.dc_values.append(list_item)
 
 
-class fuzz:
+class Fuzz:
+    """Fuzz"""
+
     def __init__(self):
         self.total_frames_to_send = 50
 
@@ -407,16 +419,16 @@ class fuzz:
         """initiate_fuzzing_logical_mode"""
         self.cyrcle1()
         if CHANNEL_DIFFERENT_FREQUENCY != "00":
-            infos.change_to_diff_Frequency()
+            infos.change_to_diff_frequency()
             self.cyrcle2()
-            infos.change_to_diff_Frequency()
+            infos.change_to_diff_frequency()
 
         self.cyrcle3()
 
         if CHANNEL_DIFFERENT_FREQUENCY != "00":
-            infos.change_to_diff_Frequency()
+            infos.change_to_diff_frequency()
             self.cyrcle4()
-            infos.change_to_diff_Frequency()
+            infos.change_to_diff_frequency()
 
     def initiate_fuzzing_extensive_mode(self):
         """initiate_fuzzing_extensive_mode"""
@@ -440,7 +452,7 @@ class fuzz:
         for _ in range(0, self.total_frames_to_send):
             if identifier == 1:
                 if firs == 1:
-                    frame = infos.generate_Authbody(
+                    frame = infos.generate_authbody(
                         auth_value, sequence_value, status_value
                     )
                     firs = 0
@@ -450,8 +462,8 @@ class fuzz:
             elif identifier == 2:
                 if firs == 1:
                     self.total_frames_to_send = 25
-                    frame = infos.generate_Custom_Commit(3, 1, 0)
-                    frame2 = infos.generate_Authbody(
+                    frame = infos.generate_custom_commit(3, 1, 0)
+                    frame2 = infos.generate_authbody(
                         auth_value, sequence_value, status_value
                     )
                     firs = 0
@@ -462,8 +474,8 @@ class fuzz:
             elif identifier == 3:
                 if firs == 1:
                     self.total_frames_to_send = 25
-                    frame = infos.generate_Custom_Commit(3, 1, 0)
-                    frame2 = infos.generate_Custom_Confirm(
+                    frame = infos.generate_custom_commit(3, 1, 0)
+                    frame2 = infos.generate_custom_confirm(
                         auth_value, sequence_value, status_value, 0
                     )
                     firs = 0
@@ -474,8 +486,8 @@ class fuzz:
             elif identifier == 4:
                 if firs == 1:
                     self.total_frames_to_send = 25
-                    frame = infos.generate_Custom_Commit(3, 1, 0)
-                    frame2 = infos.generate_Custom_Confirm(
+                    frame = infos.generate_custom_commit(3, 1, 0)
+                    frame2 = infos.generate_custom_confirm(
                         auth_value, sequence_value, status_value, 1
                     )
                     firs = 0
@@ -486,7 +498,7 @@ class fuzz:
 
             elif identifier == 5:
                 if firs == 1:
-                    frame = infos.generate_Custom_Commit(
+                    frame = infos.generate_custom_commit(
                         auth_value, sequence_value, status_value
                     )
                     firs = 0
@@ -496,7 +508,7 @@ class fuzz:
             elif identifier == 6:
                 if firs == 1:
                     firs = 0
-                    frame = infos.generate_Custom_Confirm(
+                    frame = infos.generate_custom_confirm(
                         auth_value, sequence_value, status_value, 0
                     )
                 message = " confirms with send-confirm value = 0 ,, with body values : "
@@ -505,7 +517,7 @@ class fuzz:
             elif identifier == 7:
                 if firs == 1:
                     firs = 0
-                    frame = infos.generate_Custom_Confirm(
+                    frame = infos.generate_custom_confirm(
                         auth_value, sequence_value, status_value, 1
                     )
                 message = " confirms with send-confirm value = 2 ,, with body values : "
@@ -543,7 +555,9 @@ class fuzz:
         state.message = string
 
 
-class nonresponsiveness_Monitor(threading.Thread):
+class NonResponsivenessMonitor(threading.Thread):
+    """NonResponsivenessMonitor"""
+
     def run(self):
         global stop_all_threads
         ip_prefix = self.find_my_ip_address()
@@ -563,28 +577,28 @@ class nonresponsiveness_Monitor(threading.Thread):
                 if ping_response == "notfound":
                     if first == 0:
                         first = 1
-                        startT = time.time()
+                        start_time = time.time()
 
-                        new_List = list()
-                        new_List.append(state.auth_values_to_try)
-                        new_List.append(state.sequence_values_to_try)
-                        new_List.append(state.status_values_to_try)
+                        new_list = list()
+                        new_list.append(state.auth_values_to_try)
+                        new_list.append(state.sequence_values_to_try)
+                        new_list.append(state.status_values_to_try)
 
-                        state.append_order(new_List)
+                        state.append_order(new_list)
 
                     print("Pinging STOPED responding")
 
                 else:
                     if first == 1:
                         first = 0
-                        endT = time.time()
-                        time_Unresponsive = endT - startT
+                        end_time = time.time()
+                        time_unresponsive = end_time - start_time
                         time_found = datetime.now().strftime("%H:%M:%S")
                         subprocess.call(
                             [
                                 "echo ",
-                                f"{time_found}. Came back online after  {time_Unresponsive} of "
-                                f"unresponsivness   During: {state.message} >> {nonresponsive_Path}",
+                                f"{time_found}. Came back online after  {time_unresponsive} of "
+                                f"unresponsivness. During: {state.message} >> {nonresponsive_path}",
                             ],
                             shell=True,
                         )
@@ -615,14 +629,14 @@ class nonresponsiveness_Monitor(threading.Thread):
                         ping_response = self.ping_target(sta_ip_address)
 
                     first = 0
-                    endT = time.time()
-                    time_Unresponsive = endT - startT
+                    end_time = time.time()
+                    time_unresponsive = end_time - start_time
                     time_found = datetime.now().strftime("%H:%M:%S")
                     subprocess.call(
                         [
                             "echo ",
-                            f"{time_found}. Came back online after  {time_Unresponsive}"
-                            f" of unresponsivness   During: {state.message} >> {nonresponsive_Path}",
+                            f"{time_found}. Came back online after  {time_unresponsive}"
+                            f" of unresponsivness   During: {state.message} >> {nonresponsive_path}",
                         ],
                         shell=True,
                     )
@@ -656,10 +670,10 @@ class nonresponsiveness_Monitor(threading.Thread):
             ip_prefix = subprocess.check_output(
                 ['hostname -I | cut -d "." -f 1,2,3 '], shell=True
             )
-            ip_prefix = ip_prefix[:-1]
+            ip_prefix = ip_prefix[:-1].decode()
 
             if len(ip_prefix) > len("x.x.x"):
-                print("Found ip prefix: " + ip_prefix + " ")
+                print(f"Found ip prefix: {ip_prefix}")
 
                 return ip_prefix
 
@@ -740,27 +754,27 @@ class nonresponsiveness_Monitor(threading.Thread):
                     fe = 0
                     print("Disconnected")
 
-                    new_List = list()
-                    new_List.append(state.auth_values_to_try)
-                    new_List.append(state.sequence_values_to_try)
-                    new_List.append(state.status_values_to_try)
+                    new_list = list()
+                    new_list.append(state.auth_values_to_try)
+                    new_list.append(state.sequence_values_to_try)
+                    new_list.append(state.status_values_to_try)
 
-                    state.append_cc(new_List)
+                    state.append_cc(new_list)
 
                     subprocess.call(
-                        [f"echo DISCONNECTED >> {nonresponsive_Path}"], shell=True
+                        [f"echo DISCONNECTED >> {nonresponsive_path}"], shell=True
                     )
 
             time.sleep(0.5)
 
 
-class neccessary_tests:
-    """neccessary_tests"""
+class NecessaryTests:
+    """NecessaryTests"""
 
     def __init__(self):
         self.check_monitor_mode()
         self.check_channel()
-        self.search_AP()
+        self.search_ap()
         self.check_sae_exchange()
         time.sleep(3)
 
@@ -768,14 +782,14 @@ class neccessary_tests:
         """thread_function"""
         time.sleep(0.1)
 
-        frame = infos.generate_Custom_Confirm(3, 2, 0, 0)
+        frame = infos.generate_custom_confirm(3, 2, 0, 0)
         print("Sending CONFIRM")
         scapy.all.sendp(frame, iface=infos.ATTACKING_INTERFACE, verbose=0)
 
     def check_sae_exchange(self):
         """check_sae_exchange"""
-        print(bcolors.OKGREEN + "\n\nPerforming a SAE exchange: " + bcolors.ENDC)
-        frame = infos.generate_Custom_Commit(3, 1, 0)
+        print(f"{bcolors.OKGREEN}\n\nPerforming a SAE exchange: {bcolors.ENDC}")
+        frame = infos.generate_custom_commit(3, 1, 0)
         for i in range(1, 6):
             x = threading.Thread(target=self.thread_function)
             x.start()
@@ -810,7 +824,7 @@ class neccessary_tests:
         except subprocess.CalledProcessError:
             mode = "1"
 
-        if "Monitor" not in mode:
+        if b"Monitor" not in mode:
             print(f"{infos.ATTACKING_INTERFACE} IS NOT set to monitor mode.")
             print("TERMINATING...")
             sys.exit(0)
@@ -820,20 +834,10 @@ class neccessary_tests:
     def check_channel(self):
         """Check Channel"""
         print(
-            bcolors.OKGREEN
-            + "Validating if channel of: "
-            + bcolors.ENDC
-            + bcolors.OKBLUE
-            + infos.ATTACKING_INTERFACE
-            + bcolors.ENDC
-            + bcolors.OKGREEN
-            + " is set to: "
-            + bcolors.ENDC
-            + bcolors.OKBLUE
-            + "-- "
-            + infos.AP_CHANNEL
-            + " --"
-            + bcolors.ENDC
+            f"{bcolors.OKGREEN}Validating if channel of: {bcolors.ENDC}"
+            f"{bcolors.OKBLUE}{infos.ATTACKING_INTERFACE}{bcolors.ENDC}"
+            f"{bcolors.OKGREEN} is set to: {bcolors.ENDC}"
+            f"{bcolors.OKBLUE}-- {infos.AP_CHANNEL} --{bcolors.ENDC}"
         )
 
         try:
@@ -862,21 +866,14 @@ class neccessary_tests:
                 break
 
             print(
-                "Channel of "
-                + infos.ATTACKING_INTERFACE
-                + " IS NOT set to: "
-                + infos.AP_CHANNEL
-                + " OR  i cannot correctly retrieve the channel information\n"
-            )
-            print(
-                "You are suggested to manually check and set the interface to the correct channel (if needed)"
-            )
-            print(
+                f"Channel of {infos.ATTACKING_INTERFACE} IS NOT set to: {infos.AP_CHANNEL}"
+                " OR  i cannot correctly retrieve the channel information\n"
+                "You are suggested to manually check and set the interface to the correct channel (if needed)\n"
                 "If you are sure that the channel is set correctly, INGORE this message.\n\n"
             )
             break
 
-    def search_AP(self):
+    def search_ap(self):
         """Search AP"""
         print(
             bcolors.OKGREEN
@@ -981,24 +978,49 @@ infos = Generate_Frames(
     PASSWORD,
 )
 
-folder_Name = datetime.now().strftime("fuzz%d-%m-%y__%H:%M:%S")
-folder_Path = f"Logs/{folder_Name}"
-deauth_Path = f"{folder_Path}/Deauth.txt"
-nonresponsive_Path = f"{folder_Path}/Nonresponsive.txt"
+print(f"Checking for '{ATTACKING_INTERFACE}'")
+try:
+    check_interface = subprocess.check_output(
+        [f"iw dev {ATTACKING_INTERFACE} info"], shell=True, stderr=subprocess.STDOUT
+    )
+except Exception as exception:
+    print(
+        f"Unable to find: '{ATTACKING_INTERFACE}', due to: {exception.stdout.decode()}"
+    )
+    sys.exit(0)
 
-subprocess.call(["mkdir -m 777 -p Logs"], shell=True)
-subprocess.call([f"mkdir -m 777 {folder_Path}"], shell=True)
-subprocess.call([f"touch {deauth_Path} && chmod 777 {deauth_Path}"], shell=True)
-subprocess.call(
-    [f"touch {nonresponsive_Path} && chmod 777 {nonresponsive_Path}"], shell=True
-)
+print(f"Interface '{MONITORING_INTERFACE}' found\n")
+
+print(f"Checking for '{MONITORING_INTERFACE}'")
+try:
+    check_interface = subprocess.check_output(
+        [f"iw dev {MONITORING_INTERFACE} info"], shell=True, stderr=subprocess.STDOUT
+    )
+except Exception as exception:
+    print(
+        f"Unable to find: '{MONITORING_INTERFACE}', due to: {exception.stdout.decode()}"
+    )
+    sys.exit(0)
+
+print(f"Interface '{MONITORING_INTERFACE}' found\n")
 
 
-state = save_State()
+folder_name = datetime.now().strftime("fuzz%d-%m-%y__%H:%M:%S")
+folder_path = f"logs/{folder_name}"
+deauth_path = f"{folder_path}/deauth.txt"
+nonresponsive_path = f"{folder_path}/nonresponsive.txt"
 
-fuzz = fuzz()
+subprocess.call(["mkdir -p logs"], shell=True)
+subprocess.call([f"mkdir {folder_path}"], shell=True)
+subprocess.call([f"touch {deauth_path}"], shell=True)
+subprocess.call([f"touch {nonresponsive_path}"], shell=True)
 
-neccessary_tests = neccessary_tests()
+
+state = SaveState()
+
+fuzz = Fuzz()
+
+NecessaryTests = NecessaryTests()
 
 global start
 start = 0
@@ -1015,7 +1037,7 @@ if MONITORING_INTERFACE == "00":
     print("\nProcceding without NON-RESPONSIVNESS MONITORING!")
     start = 1
 else:
-    thread1 = nonresponsiveness_Monitor()
+    thread1 = NonResponsivenessMonitor()
     thread1.start()
 
 
@@ -1025,7 +1047,7 @@ stop_all_threads = 0
 while True:
     if start == 1:
         fuzz.initiate_fuzzing_logical_mode()
-        graphs.statisticss(nonresponsive_Path, state.order_values)
+        graphs.statisticss(nonresponsive_path, state.order_values)
         stop_all_threads = 1
 
         # fuzz.initiate_Fuzzing_EXTENDED_MODE()

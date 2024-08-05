@@ -541,7 +541,9 @@ print(f"Checking if '{current_dir}/blab' is available")
 
 blab = shutil.which("blab", path=current_dir)
 if blab is None:
-    print(f"Failed to find '{current_dir}/blab', please install it and have it in the path")
+    print(
+        f"Failed to find '{current_dir}/blab', please install it and have it in the path"
+    )
     sys.exit(0)
 
 print(f"Found 'blab' at: {blab}\n")

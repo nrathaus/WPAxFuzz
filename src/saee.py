@@ -123,6 +123,12 @@ class Peer:
         self.name = name
         self.password = password
         self.mac_address = mac_address
+        self.other_mac = None
+        self.PE = None
+        self.private = None
+        self.mask = None
+        self.scalar = None
+        self.element = None
 
         self.p = int(
             "A9FB57DBA1EEA9BC3E660A909D838D726E3BF623D52620282013481D1F6E5377", 16
@@ -157,7 +163,6 @@ class Peer:
             if self.curve.is_quadratic_residue(val):
                 if num_valid_points < 5:
                     x = seed
-                    save = base
                     found = 1
                     num_valid_points += 1
 
@@ -186,7 +191,7 @@ class Peer:
         self.scalar = (self.private + self.mask) % self.q
 
         if self.scalar < 2:
-            raise ValueError("Scalar is {}, regenerating...".format(self.scalar))
+            raise ValueError(f"Scalar is {self.scalar}, regenerating...")
 
         P = self.curve.double_add_algorithm(self.mask, self.PE)
 
@@ -197,7 +202,8 @@ class Peer:
         return self.scalar, self.element
 
     def key_derivation_function(self, n, base, seed):
-        combined_seed = "{}{}".format(base, seed.encode())
+        """key_derivation_function"""
+        combined_seed = f"{base}{seed.encode()}"
 
         random.seed(combined_seed)
 
@@ -216,9 +222,10 @@ class Peer:
         return k
 
     def compute_hashed_password(self, counter):
+        """compute_hashed_password"""
         maxm = max(self.mac_address, self.other_mac)
         minm = min(self.mac_address, self.other_mac)
-        message = "{}{}{}{}".format(maxm, minm, self.password, counter).encode()
+        message = f"{maxm}{minm}{self.password}{counter}".encode()
 
         H = hashlib.sha256()
         H.update(message)
@@ -226,8 +233,9 @@ class Peer:
         return digest
 
 
-def handshake(password, mac_STA, mac_AP):
-    mac1, mac2 = mac_STA, mac_AP
+def handshake(password, mac_sta, mac_ap):
+    """handshake"""
+    mac1, mac2 = mac_sta, mac_ap
     sta = Peer(password, mac1, "STA")
 
     sta.initiate(mac2)
@@ -236,29 +244,27 @@ def handshake(password, mac_STA, mac_AP):
     return scalar_sta, element_sta
 
 
-def generate_Scalar_Finite(password, mac_STA, mac_AP):
-    scalar_sta, element_sta = handshake(password, mac_STA, mac_AP)
+def generate_scalar_finite(password, mac_sta, mac_ap):
+    """generate_scalar_finite"""
+    scalar_sta, element_sta = handshake(password, mac_sta, mac_ap)
 
     while (
-        len(hex(element_sta[0])) != 67
-        or len(hex(element_sta[1])) != 67
-        or len(hex(scalar_sta)) != 67
+        len(hex(element_sta[0])) != 66
+        or len(hex(element_sta[1])) != 66
+        or len(hex(scalar_sta)) != 66
     ):
-        scalar_sta, element_sta = handshake(password, mac_STA, mac_AP)
+        scalar_sta, element_sta = handshake(password, mac_sta, mac_ap)
 
     scalar = hex(scalar_sta)
     scalar = scalar[2:]
-    scalar = scalar[:-1]
     scalar = unhexlify(scalar)
 
     x1 = hex(element_sta[0])
     y1 = hex(element_sta[1])
 
     x1 = x1[2:]
-    x1 = x1[:-1]
 
     y1 = y1[2:]
-    y1 = y1[:-1]
 
     x1 = unhexlify(x1)
     y1 = unhexlify(y1)
