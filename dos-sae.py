@@ -204,13 +204,13 @@ class Generate_Frames:
 
     def change_to_diff_frequency(self):
         """Change to Diff Frequency"""
-        temp_Mac = self.AP_MAC
+        temp_mac = self.AP_MAC
         self.AP_MAC = self.AP_MAC_DIFFERENT
-        self.AP_MAC_DIFFERENT = temp_Mac
+        self.AP_MAC_DIFFERENT = temp_mac
 
-        temp_Channel = self.AP_CHANNEL
+        temp_channel = self.AP_CHANNEL
         self.AP_CHANNEL = self.CHANNEL_DIFFERENT
-        self.CHANNEL_DIFFERENT = temp_Channel
+        self.CHANNEL_DIFFERENT = temp_channel
 
         subprocess.call(
             [f"iwconfig {self.ATTACKING_INTERFACE} channel {self.AP_CHANNEL}"],
