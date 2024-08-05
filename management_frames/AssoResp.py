@@ -27,7 +27,7 @@ class AssoResp(Frame):
         self.interface = interface
         self.direction = direction
         self.fuzzer_state = {
-            "empty": {"send_function": self.MAC_header, "conn_loss": False},
+            "empty": {"send_function": self.mac_header, "conn_loss": False},
             "capabilities": {
                 "send_function": self.send_asso_resp_with_rand_capabilities,
                 "conn_loss": False,

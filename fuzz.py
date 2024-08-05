@@ -2,6 +2,10 @@
 import subprocess
 import sys
 import time
+import shutil
+
+import scapy.all
+import scapy.layers.dot11
 
 import ascii_art
 import settings
@@ -245,19 +249,19 @@ def fuzz_management_frames():
     print('Type "standard" for the standard mode')
     print('Type "random" for the random mode\n\n')
     mode = input("Enter a choice: ").lower()
-    if mode in ["standard", "random"]:
-        aliveness_check = AllvCheck(targeted_sta, "fuzzing")
-        aliveness_check.start()
-        while not settings.retrieving_ip_address:
-            if settings.ip_address_not_alive:
-                sys.exit(0)
 
-        time.sleep(10)
-        if issue_clears:
-            subprocess.call(["clear"], shell=True)
-    else:
+    if mode not in ["standard", "random"]:
         print(f"{bcolors.FAIL}\nNo such mode :({bcolors.ENDC}")
         sys.exit(0)
+
+    aliveness_check = AllvCheck(targeted_sta, "fuzzing")
+    aliveness_check.start()
+    while not settings.retrieving_ip_address:
+        if settings.ip_address_not_alive:
+            sys.exit(0)
+
+    # print("Sleeping for 10 seconds")
+    # time.sleep(10)
 
     if issue_clears:
         subprocess.call(["clear"], shell=True)
@@ -511,16 +515,82 @@ print(
 print(("- " * 62) + "\n\n")
 
 
-# Check that the att_interface
+print(f"Checking for '{att_interface}'")
 try:
     check_interface = subprocess.check_output(
-        [f"iw dev {att_interface} info"],
-        shell=True,
-        stderr=subprocess.STDOUT
+        [f"iw dev {att_interface} info"], shell=True, stderr=subprocess.STDOUT
     )
 except Exception as exception:
-    print(f"Unable to find: {att_interface}, due to: {exception.stdout.decode()}")
+    print(f"Unable to find: '{att_interface}', due to: {exception.stdout.decode()}")
     sys.exit(0)
+
+print(f"Interface '{att_interface}' found\n")
+
+print(f"Checking if 'airmon-ng' is available")
+
+airmon_ng = shutil.which("airmon-ng")
+if airmon_ng is None:
+    print("Failed to find 'airmon-ng', please install it and have it in the path")
+    sys.exit(0)
+
+print(f"Found 'airmon-ng' at: {airmon_ng}\n")
+
+print("Try to change the mode of the interface to 'monitor'")
+try:
+    mode_monitor = subprocess.check_output(
+        [f"iw dev {att_interface} set monitor none"],
+        shell=True,
+        stderr=subprocess.STDOUT,
+    )
+except Exception as exception:
+    print(
+        f"Unable to change monitor mode: '{att_interface}', due to: {exception.stdout.decode()}"
+    )
+    sys.exit(0)
+
+print(f"Successfully changed '{att_interface}' to 'monitor'\n")
+
+print("Try to bring up the interface")
+try:
+    mode_monitor = subprocess.check_output(
+        [f"ifconfig {att_interface} up"], shell=True, stderr=subprocess.STDOUT
+    )
+except Exception as exception:
+    print(f"Unable to bring up: '{att_interface}', due to: {exception.stdout.decode()}")
+    sys.exit(0)
+
+print(f"Successfully brought up '{att_interface}'\n")
+
+print(f"Trying to verify the SSID provided: '{real_ap_ssid}'")
+
+captured_beacons = scapy.all.sniff(
+    iface=att_interface, timeout=1, filter="type mgt subtype beacon"
+)
+
+found_beacon = None
+for captured_beacon in captured_beacons:
+    elt = captured_beacon[scapy.layers.dot11.Dot11Elt]
+
+    ssid = elt.info.decode()
+    if ssid == real_ap_ssid:
+        found_beacon = captured_beacon
+        break
+
+if found_beacon is None:
+    print(f"Not found the SSID provided: '{real_ap_ssid}'")
+    sys.exit(0)
+
+print(f"Found the SSID provided: '{real_ap_ssid}'")
+
+# Verify that targeted_access_point matches
+print(f"Verifying that SSID MAC equals: {targeted_access_point}")
+dot11 = found_beacon[scapy.layers.dot11.Dot11]
+
+if dot11.addr2 != targeted_access_point:
+    print(f"SSID has the following MAC: '{dot11.addr1}' not: '{targeted_access_point}'")
+    sys.exit(0)
+
+print("MAC address match\n")
 
 
 print("1) Fuzz Management Frames")

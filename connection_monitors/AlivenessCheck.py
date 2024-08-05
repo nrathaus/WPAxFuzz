@@ -74,22 +74,24 @@ class AllvCheck(threading.Thread):
                 f"\n\n{bcolors.OKGREEN}----Retrieving your IP address----{bcolors.ENDC}"
             )
             ip_prefix = subprocess.check_output(
-                ['hostname -I | cut -d "." -f 1,2,3 '], shell=True
+                ['hostname -I | cut -d "." -f 1,2,3'], shell=True
             )
             ip_prefix = ip_prefix[:-1].decode("utf-8")
 
             if len(ip_prefix) > 5:
-                print("\nFound IP prefix: " + ip_prefix + " ")
+                print(f"\nFound IP prefix: '{ip_prefix}' ")
                 return ip_prefix
 
             print("Could not retrieve your IP address! Retrying in 3s.")
             time.sleep(3)
 
     def find_ip_address_of_sta(self, ip_prefix):
+        """find_ip_address_of_sta"""
         temp = ip_prefix
         print(
             f"\n\n{bcolors.OKGREEN}----Pinging all hosts with an IP prefix of: "
-            f"{ip_prefix}.xx----{bcolors.ENDC}"
+            f"{ip_prefix}.xx----{bcolors.ENDC}\n"
+            f"Trying to locate Targeted STA MAC address: '{self.targeted_sta}'"
         )
 
         found = False
@@ -99,7 +101,7 @@ class AllvCheck(threading.Thread):
                 ip_prefix += "." + str(i)
                 try:
                     subprocess.call(
-                        ["ping -f -c 1 -W 0.01 " + ip_prefix + " > /dev/null "],
+                        [f"ping -f -c 1 -W 0.01 {ip_prefix} > /dev/null"],
                         shell=True,
                     )
                 except:
@@ -109,20 +111,18 @@ class AllvCheck(threading.Thread):
                 try:
                     sta_ip_address = subprocess.check_output(
                         [
-                            "arp -a | grep "
-                            + self.targeted_sta
-                            + ' | tr -d "()" | cut -d " " -f2'
+                            f'arp -a | grep {self.targeted_sta} | tr -d "()" | cut -d " " -f2'
                         ],
                         shell=True,
                     )
                     sta_ip_address = sta_ip_address[:-1].decode("utf-8")
                 except Exception as e:
-                    print("arp -a exception.")
+                    print(f"arp -a exception. Exception: {e}")
                     sta_ip_address = "1"
 
                 if len(sta_ip_address) > 5:
                     print(
-                        f"\nRetrieved IP of MAC: {self.targeted_sta}   is   {sta_ip_address}\n"
+                        f"\nRetrieved IP of MAC: '{self.targeted_sta}' is '{sta_ip_address}'\n"
                     )
                     found = 1
                     responsive = self.ping_target(sta_ip_address)

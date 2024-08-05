@@ -29,7 +29,7 @@ class Proberesp(Frame):
         self.ssid = scapy.layers.dot11.Dot11Elt(ID="SSID", info=ssid, len=len(ssid))
         self.direction = direction
         self.fuzzer_state = {
-            "empty": {"send_function": self.MAC_header, "conn_loss": False},
+            "empty": {"send_function": self.mac_header, "conn_loss": False},
             "timestamps and intervals": {
                 "send_function": self.send_probe_resp_with_rand_timestamp_interval,
                 "conn_loss": False,
