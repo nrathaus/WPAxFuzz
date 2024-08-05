@@ -658,7 +658,7 @@ class nonresponsiveness_Monitor(threading.Thread):
             )
             ip_prefix = ip_prefix[:-1]
 
-            if len(ip_prefix) > 5:
+            if len(ip_prefix) > len("x.x.x"):
                 print("Found ip prefix: " + ip_prefix + " ")
 
                 return ip_prefix
@@ -706,9 +706,9 @@ class nonresponsiveness_Monitor(threading.Thread):
                 print("arp -a exception.")
                 sta_ip_address = "1"
 
-            if len(sta_ip_address) > 5:
+            if len(sta_ip_address) > len("x.x.x"):
                 print(
-                    "RETRIEVED IP OF MAC: "
+                    "Retrieved IP of MAC: "
                     + TARGETED_STA_MAC_ADDRESS
                     + "   is   "
                     + sta_ip_address
@@ -798,18 +798,9 @@ class neccessary_tests:
         mode = "s"
 
         print(
-            bcolors.OKGREEN
-            + "Validating if mode of attacking interface: "
-            + bcolors.ENDC
-            + bcolors.OKBLUE
-            + infos.ATTACKING_INTERFACE
-            + bcolors.ENDC
-            + bcolors.OKGREEN
-            + " is set to: "
-            + bcolors.ENDC
-            + bcolors.OKBLUE
-            + "-- MONITOR MODE --"
-            + bcolors.ENDC
+            f"{bcolors.OKGREEN}Validating if mode of attacking interface: "
+            f"{bcolors.ENDC}{bcolors.OKBLUE}{infos.ATTACKING_INTERFACE}{bcolors.ENDC}{bcolors.OKGREEN}"
+            f" is set to: {bcolors.ENDC}{bcolors.OKBLUE}-- MONITOR MODE --{bcolors.ENDC}"
         )
         try:
             mode = subprocess.check_output(
@@ -819,12 +810,12 @@ class neccessary_tests:
         except subprocess.CalledProcessError:
             mode = "1"
 
-        if len(mode) > 5:
-            print(f"{infos.ATTACKING_INTERFACE} IS set to monitor mode. \n\n")
-        else:
+        if "Monitor" not in mode:
             print(f"{infos.ATTACKING_INTERFACE} IS NOT set to monitor mode.")
             print("TERMINATING...")
             sys.exit(0)
+
+        print(f"{infos.ATTACKING_INTERFACE} IS set to monitor mode. \n\n")
 
     def check_channel(self):
         """Check Channel"""
