@@ -78,7 +78,7 @@ class AllvCheck(threading.Thread):
             )
             ip_prefix = ip_prefix[:-1].decode("utf-8")
 
-            if len(ip_prefix) > 5:
+            if len(ip_prefix) > len("x.x.x"):
                 print(f"\nFound IP prefix: '{ip_prefix}' ")
                 return ip_prefix
 
@@ -120,7 +120,7 @@ class AllvCheck(threading.Thread):
                     print(f"arp -a exception. Exception: {e}")
                     sta_ip_address = "1"
 
-                if len(sta_ip_address) > 5:
+                if len(sta_ip_address) > len("x.x.x"):
                     print(
                         f"\nRetrieved IP of MAC: '{self.targeted_sta}' is '{sta_ip_address}'\n"
                     )
