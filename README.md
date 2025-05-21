@@ -74,15 +74,18 @@ You can execute the tool using the below command:
 
 1) Make sure to have the below pre-installed. Probably other versions of Scapy and Python will be applicable too.
 
-    [![Python][Python.py]][Python-url] [![Scapy][Scapy]][Scapy-url] [![Nmap][Nmap]][Nmap-url] [![Blab][Blab]][Blab-url]  
+    [![Python][Python.py]][Python-url] [![Scapy][Scapy]][Scapy-url] [![Nmap][Nmap]][Nmap-url] [![Blab][Blab]][Blab-url]
 
-2) Before initializing the tool, the user has to probe the local network to discover any potential targets, i.e., STAs and APs.
+   Also, [![aircrack-ng][aircrack-ng]][aircrack-url] must be installed in your system.
+
+3) Before initializing the tool, the user has to probe the local network to discover any potential targets, i.e., STAs and APs.
 ```
     nmap -sP {ip_prefix}.*
-```
+```  
 3) In case the fuzz testing is executed on a Virtual Machine (VM), and the targeted STA happens to also run on the host machine, it may lead to false deductions. It is recommended to place the STA and the fuzzing operation to different physical machines.
-4) If the targeted STA is an MS Windows OS machine, it may be necessary to modify the firewall to allow ``pinging'' within the local network. This enables the monitoring mode to check the aliveness of the associated STA..
-5) Regarding the Blab tool (seed generation), due to OS inconsistencies you have to place the binary file of Blab to the main directory of the fuzzer project. In this way, the fuzzer is compatible regardless the host OS.
+4) If the targeted STA is an MS Windows OS machine, it may be necessary to modify the firewall to allow ``pinging'' within the local network. This enables the monitoring mode to check the aliveness of the associated STA.
+5) The method find_LAN_prefix in AlivenessCheck.py relies on extracting the first IP address returned by hostname -I, which can lead to incorrect subnet detection when multiple network interfaces are present, as the desired interface's IP may not be the first in the list. Ensure that the desired subnetwork's IP address is the first in the output of hostname -I (Working on a fix).
+6) Regarding the Blab tool (seed generation), due to OS inconsistencies you have to place the binary file of Blab to the main directory of the fuzzer project. In this way, the fuzzer is compatible regardless the host OS.
 ```
     git clone https://haltp.org/git/blab.git
     cd blab/
@@ -94,7 +97,7 @@ You can execute the tool using the below command:
 
 ### Description
 
-STEP1: Update the config file with the (i) targeted AP and associated STA MAC addresses, (ii) SSID of the AP,  and (iii) the wireless interface name.  
+STEP1: Update the config file (src/config.json) with the (i) targeted AP and associated STA MAC addresses, (ii) SSID of the AP,  and (iii) the wireless interface name.  
 STEP2: Set the WNIC to monitor mode:  
 ```
     sudo airmon-ng
@@ -263,9 +266,9 @@ We would like to thank all the vendors we contacted and reported these attacks, 
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [contributors-shield]: https://img.shields.io/badge/Contributors-3-brightgreen?style=for-the-badge
 [contributors-url]: https://github.com/efchatz/WPAxFuzz/contributors
-[stars-shield]: https://img.shields.io/badge/Stars-163-blue?style=for-the-badge
+[stars-shield]: https://img.shields.io/badge/Stars-185-blue?style=for-the-badge
 [stars-url]: https://github.com/efchatz/WPAxFuzz/stargazers
-[forks-shield]: https://img.shields.io/badge/Forks-15-blue?style=for-the-badge
+[forks-shield]: https://img.shields.io/badge/Forks-19-blue?style=for-the-badge
 [forks-url]: https://github.com/efchatz/WPAxFuzz/network/members
 [issues-shield]: https://img.shields.io/badge/Issues-0-lightgrey?style=for-the-badge
 [issues-url]: https://github.com/efchatz/WPAxFuzz/issues
@@ -279,3 +282,5 @@ We would like to thank all the vendors we contacted and reported these attacks, 
 [Nmap-url]: https://nmap.org/
 [Blab]: https://img.shields.io/badge/Blab-1.0-blue
 [Blab-url]: https://gitlab.com/akihe/blab/-/tree/master
+[aircrack-ng]: https://img.shields.io/badge/aircrack-1.7-blue
+[aircrack-url]: https://www.aircrack-ng.org/
